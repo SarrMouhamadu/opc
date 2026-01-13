@@ -5,7 +5,7 @@ from typing import List, Dict, Any
 
 router = APIRouter(prefix="/planning", tags=["Planning"])
 
-REQUIRED_COLUMNS = ["Employee ID", "Date", "Time", "Pickup Point", "Dropoff Point"]
+REQUIRED_COLUMNS = ["Employee ID", "Date", "Time", "Pickup Point", "Dropoff Point", "Zone"]
 
 @router.post("/upload")
 async def upload_planning(file: UploadFile = File(...)):

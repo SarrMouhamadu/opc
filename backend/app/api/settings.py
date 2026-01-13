@@ -8,12 +8,16 @@ class VehicleType(BaseModel):
     name: str
     capacity: int
     base_price: float
+    zone_prices: dict[int, float] = {1: 10.0, 2: 15.0, 3: 20.0} # Zone prices for this vehicle
 
 class Settings(BaseModel):
     grouping_window_minutes: int = 20
+    option_1_enabled: bool = True
+    option_2_enabled: bool = True
+    option_2_pickup_price: float = 5.0 # Price per pickup for Option 2
     vehicle_types: List[VehicleType] = [
-        VehicleType(name="Berline", capacity=4, base_price=10.0),
-        VehicleType(name="Hiace", capacity=13, base_price=25.0)
+        VehicleType(name="Berline", capacity=4, base_price=10.0, zone_prices={1: 10.0, 2: 15.0, 3: 20.0}),
+        VehicleType(name="Hiace", capacity=13, base_price=25.0, zone_prices={1: 25.0, 2: 35.0, 3: 45.0})
     ]
 
 # In-memory storage for demonstration (should be persistent in a real SaaS)
