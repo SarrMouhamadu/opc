@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 export interface VehicleType {
   name: string;
-  capacity: int;
+  capacity: number;
   base_price: number;
 }
 
