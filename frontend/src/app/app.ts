@@ -6,11 +6,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { UploadPlanning } from './components/upload-planning/upload-planning';
 import { SettingsComponent } from './components/settings/settings';
+import { CostComparisonComponent } from './components/cost-comparison/cost-comparison';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, MatToolbarModule, MatIconModule, MatButtonModule, UploadPlanning, SettingsComponent],
+  imports: [CommonModule, RouterOutlet, MatToolbarModule, MatIconModule, MatButtonModule, UploadPlanning, SettingsComponent, CostComparisonComponent],
   template: `
     <mat-toolbar color="primary" class="main-toolbar">
       <div class="logo-container">
@@ -21,6 +22,9 @@ import { SettingsComponent } from './components/settings/settings';
         <button mat-button (click)="currentView.set('planning')" [class.active]="currentView() === 'planning'">
           Planning
         </button>
+        <button mat-button (click)="currentView.set('comparison')" [class.active]="currentView() === 'comparison'">
+          Comparaison
+        </button>
         <button mat-button (click)="currentView.set('settings')" [class.active]="currentView() === 'settings'">
           Paramètres
         </button>
@@ -29,6 +33,7 @@ import { SettingsComponent } from './components/settings/settings';
 
     <main class="content">
       <app-upload-planning *ngIf="currentView() === 'planning'" />
+      <app-cost-comparison *ngIf="currentView() === 'comparison'" />
       <app-settings *ngIf="currentView() === 'settings'" />
       <router-outlet />
     </main>
@@ -64,5 +69,5 @@ import { SettingsComponent } from './components/settings/settings';
   `,
 })
 export class App {
-  currentView = signal<'planning' | 'settings'>('planning');
+  currentView = signal<'planning' | 'comparison' | 'settings'>('planning');
 }

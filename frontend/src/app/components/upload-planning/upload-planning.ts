@@ -22,7 +22,6 @@ import { PlanningService } from '../../services/planning.service';
     MatProgressBarModule,
     MatSnackBarModule
   ],
-  providers: [PlanningService],
   template: `
     <div class="upload-container">
       <mat-card class="upload-card">

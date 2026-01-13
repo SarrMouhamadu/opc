@@ -24,7 +24,6 @@ import { SettingsService, Settings, VehicleType } from '../../services/settings.
     MatIconModule,
     MatSnackBarModule
   ],
-  providers: [SettingsService],
   template: `
     <div class="settings-container">
       <mat-card class="settings-card">
