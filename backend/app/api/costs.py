@@ -40,10 +40,13 @@ async def calculate_costs(planning_data: List[Dict[str, Any]], settings: Setting
     
     # Robust Zone Parsing
     def parse_zone(val):
+        if val is None or pd.isna(val): return 1
         try:
-            return int(val)
-        except:
-            s = str(val).upper()
+            # If it's already an int/float
+            if isinstance(val, (int, float)):
+                return int(val)
+            s = str(val).upper().strip()
+            if not s: return 1
             import re
             digits = re.findall(r'\d+', s)
             if digits: return int(digits[0])
@@ -51,13 +54,17 @@ async def calculate_costs(planning_data: List[Dict[str, Any]], settings: Setting
             if 'B' in s: return 2
             if 'C' in s: return 3
             return 1
+        except:
+            return 1
 
     if "Zone" not in df.columns: 
         df["Zone"] = 1
     else: 
-        df["Zone"] = df["Zone"].apply(parse_zone)
+        # Ensure fallback for NaN
+        df["Zone"] = df["Zone"].fillna(1).apply(parse_zone)
 
     if "Ligne_Bus_Option_2" not in df.columns: df["Ligne_Bus_Option_2"] = "Ligne Indéfinie"
+    df["Ligne_Bus_Option_2"] = df["Ligne_Bus_Option_2"].fillna("Ligne Indéfinie")
 
     # -----------------------------------------------------
     # OPTION 2: LINE MODE (BUS 13 PAX) - STRICT COMPLIANCE
