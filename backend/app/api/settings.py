@@ -14,7 +14,8 @@ class Settings(BaseModel):
     grouping_window_minutes: int = 20
     option_1_enabled: bool = True
     option_2_enabled: bool = True
-    option_2_pickup_price: float = 5.0 # Price per pickup for Option 2
+    option_2_pickup_price: float = 5.0 # Deprecated/Secondary pricing
+    option_2_bus_price: float = 25.0 # Price per 13-seater bus for Option 2 (Line mode)
     vehicle_types: List[VehicleType] = [
         VehicleType(name="Berline", capacity=4, base_price=10.0, zone_prices={1: 10.0, 2: 15.0, 3: 20.0}),
         VehicleType(name="Hiace", capacity=13, base_price=25.0, zone_prices={1: 25.0, 2: 35.0, 3: 45.0})

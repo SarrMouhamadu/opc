@@ -7,17 +7,17 @@ export interface HistoryEntry {
   date: string;
   total_cost: number;
   savings: number;
-  total_vehicles: number;
-  total_employees: number;
+  total_vehicles?: number;
+  total_employees?: number;
   data_snapshot: any;
 }
 
 export interface ArchiveRequest {
   total_cost: number;
   savings: number;
-  total_vehicles: number;
-  total_employees: number;
-  planning_summary: any;
+  details: any; // Allow full hierarchy
+  total_vehicles: number; // Keep but optional if details cover it? Or enforce mapping.
+  total_employees: number; // We might need to map this from the new breakdown or make optional
 }
 
 @Injectable({

@@ -1,8 +1,26 @@
 from fastapi import FastAPI
-from app.api import planning, settings, costs, optimization, dashboard, history
+from fastapi.middleware.cors import CORSMiddleware
+from app.api import planning, settings, costs, optimization, dashboard, history, auth
 
-app = FastAPI(title='Transport Cost Optimization API')
+from app.core.config import settings as config_settings
 
+app = FastAPI(
+    title='Transport Cost Optimization API',
+    debug=config_settings.DEBUG,
+    docs_url="/docs" if config_settings.DEBUG else None,
+    redoc_url="/redoc" if config_settings.DEBUG else None,
+    openapi_url="/openapi.json" if config_settings.DEBUG else None
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # In production, verify specific origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(auth.router)
 app.include_router(planning.router)
 app.include_router(settings.router)
 app.include_router(costs.router)

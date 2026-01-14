@@ -2,19 +2,40 @@ import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button'; // Added for logout button
+import { MatMenuModule } from '@angular/material/menu'; // Added for user menu
 import { UploadPlanning } from './components/upload-planning/upload-planning';
 import { SettingsComponent } from './components/settings/settings';
 import { CostComparisonComponent } from './components/cost-comparison/cost-comparison';
 import { OptimizationDashboardComponent } from './components/optimization-dashboard/optimization-dashboard';
 import { DashboardHomeComponent } from './components/dashboard-home/dashboard-home';
 import { HistoryViewComponent } from './components/history-view/history-view';
+import { LoginComponent } from './components/login/login';
+import { AuthService } from './services/auth.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, MatIconModule, UploadPlanning, SettingsComponent, CostComparisonComponent, OptimizationDashboardComponent, DashboardHomeComponent, HistoryViewComponent],
+  imports: [
+    CommonModule, 
+    RouterOutlet, 
+    MatIconModule, 
+    MatButtonModule,
+    MatMenuModule,
+    UploadPlanning, 
+    SettingsComponent, 
+    CostComparisonComponent, 
+    OptimizationDashboardComponent, 
+    DashboardHomeComponent, 
+    HistoryViewComponent,
+    LoginComponent
+  ],
   template: `
-    <div class="app-layout">
+    <!-- Login View -->
+    <app-login *ngIf="!authService.isAuthenticated()"></app-login>
+
+    <!-- Main App Layout (Protected) -->
+    <div class="app-layout" *ngIf="authService.isAuthenticated()">
       <!-- Sidebar -->
       <aside class="sidebar">
         <div class="logo-section">
@@ -51,13 +72,20 @@ import { HistoryViewComponent } from './components/history-view/history-view';
           </a>
         </nav>
 
-        <div class="user-profile">
+        <div class="user-profile" [matMenuTriggerFor]="userMenu" style="cursor: pointer;">
           <div class="avatar">MS</div>
           <div class="info">
             <span class="name">Mouhamadou Sarr</span>
             <span class="role">Admin</span>
           </div>
+          <mat-icon style="margin-left: auto; font-size: 20px; color: var(--text-secondary);">expand_more</mat-icon>
         </div>
+        <mat-menu #userMenu="matMenu">
+          <button mat-menu-item (click)="logout()">
+            <mat-icon>logout</mat-icon>
+            <span>Déconnexion</span>
+          </button>
+        </mat-menu>
       </aside>
 
       <!-- Main Content -->
@@ -230,6 +258,8 @@ import { HistoryViewComponent } from './components/history-view/history-view';
 export class App {
   currentView = signal<'dashboard' | 'planning' | 'comparison' | 'optimization' | 'settings' | 'history'>('dashboard');
 
+  constructor(public authService: AuthService) {}
+
   getViewTitle() {
     switch (this.currentView()) {
       case 'dashboard': return "Vue d'Ensemble";
@@ -240,5 +270,9 @@ export class App {
       case 'history': return "Historique & Suivi";
       default: return "OptiNav";
     }
+  }
+
+  logout() {
+    this.authService.logout();
   }
 }

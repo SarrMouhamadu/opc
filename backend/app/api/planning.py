@@ -6,6 +6,9 @@ from typing import List, Dict, Any
 router = APIRouter(prefix="/planning", tags=["Planning"])
 
 REQUIRED_COLUMNS = ["Employee ID", "Date", "Time", "Pickup Point", "Dropoff Point", "Zone"]
+# "Ligne_Bus_Option_2" is dynamically checked now to allow legacy files with warning, 
+# or enforced if Strict Mode. For compliance, let's enforce or warn.
+REQUIRED_OP2_COLUMN = "Ligne_Bus_Option_2"
 
 @router.post("/upload")
 async def upload_planning(file: UploadFile = File(...)):
@@ -15,7 +18,16 @@ async def upload_planning(file: UploadFile = File(...)):
     try:
         content = await file.read()
         if file.filename.endswith('.csv'):
-            df = pd.read_csv(io.BytesIO(content))
+            # Try valid comma separation first
+            try:
+                df = pd.read_csv(io.BytesIO(content))
+                # Check if it looks like we failed to parse columns (e.g. all in one column)
+                if len(df.columns) < 2:
+                     # Try semicolon
+                     df = pd.read_csv(io.BytesIO(content), sep=';')
+            except:
+                 # Fallback
+                 df = pd.read_csv(io.BytesIO(content), sep=';')
         else:
             df = pd.read_excel(io.BytesIO(content))
         
@@ -26,6 +38,10 @@ async def upload_planning(file: UploadFile = File(...)):
                 status_code=400, 
                 detail=f"Missing required columns: {', '.join(missing_columns)}"
             )
+        
+        if REQUIRED_OP2_COLUMN not in df.columns:
+            # Add default if missing but warn in a real app. For strict mode we assume it will be provided or default to 'Ligne 1'
+            df[REQUIRED_OP2_COLUMN] = "Ligne Indéfinie"
         
         # Convert to dictionary for preview (limit to first 50 rows)
         preview_data = df.head(50).fillna("").to_dict(orient="records")

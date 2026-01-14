@@ -19,5 +19,10 @@ COPY . .
 # Expose port
 EXPOSE 8000
 
+# Create a non-root user and set permissions
+RUN adduser --disabled-password --gecos '' appuser && \
+    chown -R appuser:appuser /app
+USER appuser
+
 # Command to run the application
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
