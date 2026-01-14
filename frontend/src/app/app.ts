@@ -7,11 +7,12 @@ import { SettingsComponent } from './components/settings/settings';
 import { CostComparisonComponent } from './components/cost-comparison/cost-comparison';
 import { OptimizationDashboardComponent } from './components/optimization-dashboard/optimization-dashboard';
 import { DashboardHomeComponent } from './components/dashboard-home/dashboard-home';
+import { HistoryViewComponent } from './components/history-view/history-view';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, MatIconModule, UploadPlanning, SettingsComponent, CostComparisonComponent, OptimizationDashboardComponent, DashboardHomeComponent],
+  imports: [CommonModule, RouterOutlet, MatIconModule, UploadPlanning, SettingsComponent, CostComparisonComponent, OptimizationDashboardComponent, DashboardHomeComponent, HistoryViewComponent],
   template: `
     <div class="app-layout">
       <!-- Sidebar -->
@@ -44,12 +45,16 @@ import { DashboardHomeComponent } from './components/dashboard-home/dashboard-ho
             <mat-icon>tune</mat-icon>
             <span>Paramètres</span>
           </a>
+          <a class="nav-item" [class.active]="currentView() === 'history'" (click)="currentView.set('history')">
+             <mat-icon>history</mat-icon>
+             <span>Historique</span>
+          </a>
         </nav>
 
         <div class="user-profile">
-          <div class="avatar">JS</div>
+          <div class="avatar">MS</div>
           <div class="info">
-            <span class="name">John Smith</span>
+            <span class="name">Mouhamadou Sarr</span>
             <span class="role">Admin</span>
           </div>
         </div>
@@ -71,6 +76,7 @@ import { DashboardHomeComponent } from './components/dashboard-home/dashboard-ho
           <app-cost-comparison *ngIf="currentView() === 'comparison'" />
           <app-optimization-dashboard *ngIf="currentView() === 'optimization'" />
           <app-settings *ngIf="currentView() === 'settings'" />
+          <app-history-view *ngIf="currentView() === 'history'" />
           <router-outlet />
         </div>
       </main>
@@ -222,7 +228,7 @@ import { DashboardHomeComponent } from './components/dashboard-home/dashboard-ho
   `,
 })
 export class App {
-  currentView = signal<'dashboard' | 'planning' | 'comparison' | 'optimization' | 'settings'>('dashboard');
+  currentView = signal<'dashboard' | 'planning' | 'comparison' | 'optimization' | 'settings' | 'history'>('dashboard');
 
   getViewTitle() {
     switch (this.currentView()) {
@@ -231,6 +237,7 @@ export class App {
       case 'comparison': return "Analyse & Coûts";
       case 'optimization': return "Optimisation & Simulation";
       case 'settings': return "Configuration";
+      case 'history': return "Historique & Suivi";
       default: return "OptiNav";
     }
   }

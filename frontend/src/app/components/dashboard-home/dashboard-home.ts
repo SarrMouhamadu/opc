@@ -7,6 +7,8 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { DashboardService, KPIResult, ZoneAnalysis } from '../../services/dashboard.service';
 import { PlanningService } from '../../services/planning.service';
+import { HistoryService } from '../../services/history.service';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-dashboard-home',
@@ -17,7 +19,8 @@ import { PlanningService } from '../../services/planning.service';
     MatButtonModule,
     MatIconModule,
     MatMenuModule,
-    MatProgressBarModule
+    MatProgressBarModule,
+    MatSnackBarModule
   ],
   template: `
     <div class="page-container">
@@ -27,6 +30,9 @@ import { PlanningService } from '../../services/planning.service';
           <p>Synthèse de l'activité et analyse des coûts.</p>
         </div>
         <div class="actions">
+          <button mat-flat-button color="accent" (click)="archive()" [disabled]="!hasData()">
+            <mat-icon>archive</mat-icon> Archiver
+          </button>
           <button mat-stroked-button color="primary" [matMenuTriggerFor]="exportMenu" [disabled]="!hasData()">
             <mat-icon>download</mat-icon> Exporter
           </button>
@@ -131,6 +137,7 @@ import { PlanningService } from '../../services/planning.service';
     .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
     .header-content h2 { font-size: 24px; margin-bottom: 4px; color: var(--text-main); }
     .header-content p { color: var(--text-secondary); margin: 0; font-size: 14px; }
+    .actions { display: flex; gap: 12px; }
 
     /* Empty State */
     .empty-state { text-align: center; padding: 64px 0; color: var(--text-secondary); background: var(--surface); border-radius: 12px; border: 1px dashed var(--border-color); }
@@ -175,7 +182,9 @@ export class DashboardHomeComponent {
 
   constructor(
     private dashboardService: DashboardService,
-    private planningService: PlanningService
+    private planningService: PlanningService,
+    private historyService: HistoryService,
+    private snackBar: MatSnackBar
   ) {
     // React to data changes
     if (this.hasData()) {
@@ -205,5 +214,25 @@ export class DashboardHomeComponent {
        a.click();
        window.URL.revokeObjectURL(url);
      });
+  }
+
+  archive() {
+    if (!this.kpis) return;
+    const archiveData = {
+      total_cost: this.kpis.total_cost,
+      savings: this.kpis.total_savings,
+      total_vehicles: this.kpis.total_vehicles,
+      total_employees: this.kpis.total_employees,
+      planning_summary: {} // Add summary if needed
+    };
+    
+    this.historyService.archive(archiveData).subscribe({
+      next: () => {
+        this.snackBar.open('Rapport archivé avec succès !', 'OK', { duration: 3000 });
+      },
+      error: () => {
+        this.snackBar.open("Erreur lors de l'archivage.", 'Fermer', { duration: 3000 });
+      }
+    });
   }
 }

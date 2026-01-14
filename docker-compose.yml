@@ -1,0 +1,22 @@
+services:
+  backend:
+    build: 
+      context: ./backend
+    container_name: opc_backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/data:/app/data # Persist history data
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: opc_frontend
+    ports:
+      - "80:80" # Map host port 80 to container port 80
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+# No networks needed for simple setup (default bridge is fine)
