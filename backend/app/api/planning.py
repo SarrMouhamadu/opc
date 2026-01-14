@@ -59,9 +59,12 @@ async def upload_planning(file: UploadFile = File(...)):
         # --- Normalization and Mapping Logic ---
         
         def normalize_text(text: str) -> str:
-            """Remove special chars, lower case, strip whitespace."""
+            """Remove special chars, lower case, strip whitespace, strip accents."""
             import re
+            import unicodedata
             text = str(text).lower().strip()
+            # Normalize unicode characters to decompose accents
+            text = unicodedata.normalize('NFD', text).encode('ascii', 'ignore').decode("utf-8")
             # Remove underscores, hyphens, spaces to make matching fuzzy
             text = re.sub(r'[\_\-\s]', '', text)
             return text
@@ -96,11 +99,12 @@ async def upload_planning(file: UploadFile = File(...)):
                  # Option 2: Handled later
                  if target_col == REQUIRED_OP2_COLUMN:
                      pass
-                 # Date and Zone: can be defaulted if missing
-                 elif target_col == "Date":
-                     pass # Will default later
-                 elif target_col == "Zone":
-                     pass # Will default later
+                 # Allow defaults for these:
+                 elif target_col == "Date": pass
+                 elif target_col == "Zone": pass
+                 elif target_col == "Time": pass # Will default
+                 elif target_col == "Employee ID": pass # Will default
+                 
                  elif target_col in REQUIRED_COLUMNS:
                      missing_canonical.append(target_col)
 
