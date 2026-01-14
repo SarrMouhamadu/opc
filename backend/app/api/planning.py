@@ -149,8 +149,8 @@ async def upload_planning(file: UploadFile = File(...)):
              # Should be caught above, but fail safe
              raise HTTPException(status_code=400, detail=f"Erreur interne de mapping. Manquant: {final_missing}")
 
-        # Convert to dictionary for preview (limit to first 50 rows)
-        preview_data = df.head(50).fillna("").to_dict(orient="records")
+        # Convert to dictionary for full processing
+        full_data = df.fillna("").to_dict(orient="records")
         
         # Log the event
         from app.core.logger import log_event
@@ -159,8 +159,9 @@ async def upload_planning(file: UploadFile = File(...)):
         return {
             "filename": file.filename,
             "row_count": len(df),
-            "preview": preview_data,
-            "mapped_columns": renamed_columns # Info for debug
+            "data": full_data, # Return FULL data for client-side state
+            "preview": full_data[:50], # Keep legacy preview key just in case
+            "mapped_columns": renamed_columns
         }
     except Exception as e:
         if isinstance(e, HTTPException):
