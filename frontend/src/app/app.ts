@@ -40,7 +40,7 @@ import { LogsService, LogEntry } from './services/logs.service';
     <app-login *ngIf="!authService.isAuthenticated()"></app-login>
 
     <!-- Main App Layout (Protected) -->
-    <div class="app-layout" *ngIf="authService.isAuthenticated()">
+    <div class="app-layout" *ngIf="authService.isAuthenticated()" [class.dark-theme]="darkMode()">
       <!-- Sidebar -->
       <aside class="sidebar">
         <div class="logo-section">
@@ -73,6 +73,13 @@ import { LogsService, LogEntry } from './services/logs.service';
              <span>Historique</span>
           </a>
         </nav>
+        
+        <div class="theme-toggle">
+            <button class="toggle-btn" (click)="toggleTheme()">
+                <mat-icon>{{ darkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+                <span>{{ darkMode() ? 'Mode Clair' : 'Mode Sombre' }}</span>
+            </button>
+        </div>
 
         <div class="user-profile" [matMenuTriggerFor]="userMenu" style="cursor: pointer;">
           <div class="avatar">MS</div>
@@ -156,6 +163,7 @@ import { LogsService, LogEntry } from './services/logs.service';
       height: 100vh;
       background: var(--bg-app);
       overflow: hidden;
+      color: var(--text-main); /* Ensure text inherits correctly */
     }
 
     /* Sidebar */
@@ -167,6 +175,7 @@ import { LogsService, LogEntry } from './services/logs.service';
       flex-direction: column;
       padding: 0;
       flex-shrink: 0;
+      transition: background-color 0.3s;
     }
 
     .logo-section {
@@ -218,13 +227,37 @@ import { LogsService, LogEntry } from './services/logs.service';
       height: 20px;
     }
     .nav-item:hover {
-      background: var(--bg-app);
+      background: var(--hover-bg);
       color: var(--text-main);
+      transform: translateX(4px); /* Subtle hover movement */
     }
     .nav-item.active {
-      background: #eff6ff; /* Light indigo tint */
+      background: #eff6ff; /* Light indigo tint - Consider variable for dark mode support? */
       color: var(--primary-color);
     }
+    /* Dark mode active state fix */
+    .dark-theme .nav-item.active {
+       background: rgba(79, 70, 229, 0.2); 
+    }
+    
+    .theme-toggle {
+        padding: 0 12px 12px;
+    }
+    .toggle-btn {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        padding: 12px 16px;
+        background: transparent;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        color: var(--text-main);
+        cursor: pointer;
+        font-size: 13px;
+        transition: all 0.2s;
+    }
+    .toggle-btn mat-icon { font-size: 18px; margin-right: 8px; width: 18px; height: 18px; }
+    .toggle-btn:hover { background: var(--hover-bg); }
 
     .user-profile {
       padding: 24px;
@@ -265,6 +298,8 @@ import { LogsService, LogEntry } from './services/logs.service';
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      background: var(--bg-app);
+      transition: background-color 0.3s;
     }
 
     .top-bar {
@@ -274,7 +309,7 @@ import { LogsService, LogEntry } from './services/logs.service';
       justify-content: space-between;
       padding: 0 40px;
       border-bottom: 1px solid var(--border-color); /* Optional: separate header */
-      background: var(--bg-app); /* Transparent or solid */
+      background: var(--surface); /* Make surface to distinguish from content */
     }
     .top-bar h2 {
       font-size: 24px;
@@ -286,7 +321,10 @@ import { LogsService, LogEntry } from './services/logs.service';
       color: var(--text-secondary);
       cursor: pointer;
       padding: 8px;
+      border-radius: 50%;
+      transition: background 0.2s;
     }
+    .icon-btn:hover { background: var(--hover-bg); color: var(--text-main); }
     
     .menu-header {
       padding: 8px 16px;
@@ -304,7 +342,7 @@ import { LogsService, LogEntry } from './services/logs.service';
         padding-bottom: 8px;
     }
     .log-content { display: flex; flex-direction: column; line-height: 1.2; }
-    .log-title { font-weight: 500; font-size: 13px; }
+    .log-title { font-weight: 500; font-size: 13px; color: var(--text-main); }
     .log-time { font-size: 11px; color: var(--text-secondary); }
     .log-icon { font-size: 18px; width: 18px; height: 18px; color: var(--primary-color); margin-right: 0 !important; }
 
@@ -318,6 +356,7 @@ import { LogsService, LogEntry } from './services/logs.service';
 export class App implements OnInit {
   currentView = signal<'dashboard' | 'planning' | 'comparison' | 'optimization' | 'settings' | 'history'>('dashboard');
   recentLogs: LogEntry[] = [];
+  darkMode = signal(false);
 
   constructor(
     public authService: AuthService,
@@ -327,6 +366,10 @@ export class App implements OnInit {
 
   ngOnInit() {
     this.loadNotifications();
+  }
+
+  toggleTheme() {
+    this.darkMode.set(!this.darkMode());
   }
 
   loadNotifications() {

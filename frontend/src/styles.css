@@ -11,6 +11,7 @@
   --text-main: #111827; /* Gray 900 */
   --text-secondary: #6b7280; /* Gray 500 */
   --border-color: #e5e7eb; /* Gray 200 */
+  --hover-bg: #f9fafb; /* Gray 50 */
   
   /* Status */
   --success: #10b981;
@@ -28,12 +29,25 @@
   --font-family: 'Inter', sans-serif;
 }
 
+/* Dark Theme Overrides */
+.dark-theme {
+  --bg-app: #111827; /* Gray 900 */
+  --surface: #1f2937; /* Gray 800 */
+  --text-main: #f9fafb; /* Gray 50 */
+  --text-secondary: #9ca3af; /* Gray 400 */
+  --border-color: #374151; /* Gray 700 */
+  --hover-bg: #2d3748; /* Gray 750 */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4);
+}
+
 body {
   margin: 0;
   font-family: var(--font-family);
   background-color: var(--bg-app);
   color: var(--text-main);
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -53,6 +67,13 @@ p {
   border-radius: var(--radius-lg) !important;
   box-shadow: var(--shadow-sm) !important;
   border: 1px solid var(--border-color);
+  transition: all 0.2s ease-in-out !important;
+}
+
+/* Hover Effect for Cards */
+.mat-mdc-card:hover {
+  box-shadow: var(--shadow-md) !important; 
+  border-color: var(--primary-color);
 }
 
 .mat-mdc-unelevated-button.mat-primary {
@@ -62,10 +83,30 @@ p {
   height: 44px !important;
   font-weight: 500 !important;
   letter-spacing: 0.3px !important;
+  transition: transform 0.1s ease !important;
+}
+.mat-mdc-unelevated-button.mat-primary:hover {
+  background-color: var(--primary-hover) !important;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
 
 .mat-mdc-outlined-button {
   border-radius: var(--radius-md) !important;
   border-color: var(--border-color) !important;
   color: var(--text-main) !important;
+}
+
+/* Scrollbar Styling for Dark Mode */
+.dark-theme ::-webkit-scrollbar {
+  width: 8px;
+}
+.dark-theme ::-webkit-scrollbar-track {
+  background: var(--bg-app); 
+}
+.dark-theme ::-webkit-scrollbar-thumb {
+  background: var(--border-color); 
+  border-radius: 4px;
+}
+.dark-theme ::-webkit-scrollbar-thumb:hover {
+  background: #4b5563; 
 }
