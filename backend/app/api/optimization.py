@@ -43,17 +43,41 @@ async def analyze_optimization(planning_data: List[Dict[str, Any]], settings: Se
     # Drivers/Groups
     groups = []
     
+    # Process Zone to always be integer
+    def parse_zone(val):
+        try:
+            # 1. Try direct int conversion
+            return int(val)
+        except:
+            # 2. Try cleaning string (Zone A -> A -> 1 ?)
+            # Let's assume standard mapping A=1, B=2, C=3 or extract digit
+            s = str(val).upper()
+            import re
+            # Extract first digit found
+            digits = re.findall(r'\d+', s)
+            if digits:
+                return int(digits[0])
+            
+            # Map A, B, C
+            if 'A' in s: return 1
+            if 'B' in s: return 2
+            if 'C' in s: return 3
+            
+            return 1 # Default
+
+    # Apply parsing to dataframe to avoid repeating logic
+    if 'Zone' in df.columns:
+        df['Zone_Int'] = df['Zone'].apply(parse_zone)
+    else:
+        df['Zone_Int'] = 1
+
+    # ... [Rest of grouping logic] ...
+    
     # We will prioritize the largest vehicle to minimize count, or use logic.
     # Constraint: "Deterministic".
     # Greedy Strategy:
     # 1. Take first person. Start a group.
     # 2. Look ahead. Anyone fitting in [Time, Time + Window] AND matching route constraints?
-    #    (Simplified: We assume same Pickup/Dropoff flow or just Time based for this Epic if not specified otherwise. 
-    #     The prompt mentions "Grouping (<= 20 min)". We assume standard Home->Work flow for all).
-    
-    # Get max capacity of largest vehicle for grouping limits (or standard Hiace 13)
-    # Ideally we should form groups of 13 max, then 4 max, etc.
-    # Let's try to fill the largest vehicle (Hiace) first.
     
     max_capacity = 13 # default Hiace
     # Find active Hiace capacity
@@ -114,8 +138,9 @@ async def analyze_optimization(planning_data: List[Dict[str, Any]], settings: Se
             
         if selected_vehicle:
             vehicle_name = selected_vehicle.name
-            # Max zone in group
-            max_zone = max([int(p.get('Zone', 1)) for p in current_group])
+            # Max zone in group - Use pre-calculated Zone_Int
+            # current_group items are dicts from df rows, so they have Zone_Int
+            max_zone = max([p.get('Zone_Int', 1) for p in current_group])
             cost = selected_vehicle.zone_prices.get(max_zone, selected_vehicle.base_price)
             capacity = selected_vehicle.capacity
         else:
@@ -128,7 +153,7 @@ async def analyze_optimization(planning_data: List[Dict[str, Any]], settings: Se
             "cost": cost,
             "occupancy": (group_count / capacity) * 100 if capacity > 0 else 0,
             "capacity": capacity,
-            "employees": [e['Employee ID'] for e in current_group]
+            "employees": [e.get('Employee ID', 'Unknown') for e in current_group]
         })
 
     # KPIs

@@ -14,11 +14,13 @@ class Settings(BaseModel):
     grouping_window_minutes: int = 20
     option_1_enabled: bool = True
     option_2_enabled: bool = True
-    option_2_pickup_price: float = 5.0 # Deprecated/Secondary pricing
-    option_2_bus_price: float = 25.0 # Price per 13-seater bus for Option 2 (Line mode)
+    option_2_pickup_price: float = 0.0 # Deprecated
+    option_2_bus_price: float = 35000.0 # Price per 13-seater bus for Option 2 (Line mode) ~35k FCFA
     vehicle_types: List[VehicleType] = [
-        VehicleType(name="Berline", capacity=4, base_price=10.0, zone_prices={1: 10.0, 2: 15.0, 3: 20.0}),
-        VehicleType(name="Hiace", capacity=13, base_price=25.0, zone_prices={1: 25.0, 2: 35.0, 3: 45.0})
+        # Berline: ~5k-10k depending on zone
+        VehicleType(name="Berline", capacity=4, base_price=5000.0, zone_prices={1: 5000.0, 2: 7500.0, 3: 10000.0}),
+        # Hiace: ~25k-45k depending on zone
+        VehicleType(name="Hiace", capacity=13, base_price=25000.0, zone_prices={1: 25000.0, 2: 35000.0, 3: 45000.0})
     ]
 
 # In-memory storage for demonstration (should be persistent in a real SaaS)

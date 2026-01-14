@@ -139,9 +139,9 @@ async def export_report(format: str, planning_data: List[Dict[str, Any]], settin
         elements.append(Paragraph("Transport Optimization Report", styles['Title']))
         elements.append(Spacer(1, 12))
         
-        elements.append(Paragraph(f"Total Cost (Option 1): {results.option_1_total} EUR", styles['Normal']))
-        elements.append(Paragraph(f"Total Cost (Option 2): {results.option_2_total} EUR", styles['Normal']))
-        elements.append(Paragraph(f"Potential Savings: {results.savings} EUR", styles['Normal']))
+        elements.append(Paragraph(f"Total Cost (Option 1): {results.option_1_total:,.0f} FCFA", styles['Normal']))
+        elements.append(Paragraph(f"Total Cost (Option 2): {results.option_2_total:,.0f} FCFA", styles['Normal']))
+        elements.append(Paragraph(f"Potential Savings: {results.savings:,.0f} FCFA", styles['Normal']))
         elements.append(Spacer(1, 24))
         
         # Table of Details

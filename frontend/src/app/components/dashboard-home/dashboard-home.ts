@@ -66,7 +66,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
                 <mat-card-content>
                     <div class="recommendation-box" [class.opt1]="analysis.best_option.includes('Option 1')" [class.opt2]="analysis.best_option.includes('Option 2')">
                        <strong>{{ analysis.best_option }}</strong>
-                       <span>Économie estimée : {{ analysis.savings | currency:'EUR':'symbol':'1.0-0' }}</span>
+                       <span>Économie estimée : {{ analysis.savings | number:'1.0-0' }} FCFA</span>
                     </div>
                 </mat-card-content>
             </mat-card>
@@ -79,20 +79,20 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
             <mat-card class="kpi-card">
                 <div class="card-header opt1-header">
                     <h4>Option 1 (Véhicules)</h4>
-                    <span class="total-price">{{ analysis.option_1_total | currency:'EUR':'symbol':'1.0-0' }}</span>
+                    <span class="total-price">{{ analysis.option_1_total | number:'1.0-0' }} FCFA</span>
                 </div>
                 <div class="kpi-list">
                     <div class="kpi-item">
                         <span class="label">Coût Moyen / Pers (Zone 1)</span>
-                        <span class="value">{{ analysis.kpi_option_1.cost_per_person_zone_1 | currency:'EUR':'symbol':'1.2-2' }}</span>
+                        <span class="value">{{ analysis.kpi_option_1.cost_per_person_zone_1 | number:'1.0-0' }} FCFA</span>
                     </div>
                     <div class="kpi-item">
                         <span class="label">Coût Moyen / Pers (Zone 2)</span>
-                        <span class="value">{{ analysis.kpi_option_1.cost_per_person_zone_2 | currency:'EUR':'symbol':'1.2-2' }}</span>
+                        <span class="value">{{ analysis.kpi_option_1.cost_per_person_zone_2 | number:'1.0-0' }} FCFA</span>
                     </div>
                     <div class="kpi-item">
                         <span class="label">Coût Moyen / Pers (Zone 3)</span>
-                        <span class="value">{{ analysis.kpi_option_1.cost_per_person_zone_3 | currency:'EUR':'symbol':'1.2-2' }}</span>
+                        <span class="value">{{ analysis.kpi_option_1.cost_per_person_zone_3 | number:'1.0-0' }} FCFA</span>
                     </div>
                     <div class="divider"></div>
                     <div class="kpi-item highlight">
@@ -110,20 +110,20 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
             <mat-card class="kpi-card">
                 <div class="card-header opt2-header">
                     <h4>Option 2 (Lignes Bus 13)</h4>
-                    <span class="total-price">{{ analysis.option_2_total | currency:'EUR':'symbol':'1.0-0' }}</span>
+                    <span class="total-price">{{ analysis.option_2_total | number:'1.0-0' }} FCFA</span>
                 </div>
                 <div class="kpi-list">
                     <div class="kpi-item">
                         <span class="label">Coût Moyen / Pers (Zone 1)</span>
-                        <span class="value">{{ analysis.kpi_option_2.cost_per_person_zone_1 | currency:'EUR':'symbol':'1.2-2' }}</span>
+                        <span class="value">{{ analysis.kpi_option_2.cost_per_person_zone_1 | number:'1.0-0' }} FCFA</span>
                     </div>
                     <div class="kpi-item">
                         <span class="label">Coût Moyen / Pers (Zone 2)</span>
-                        <span class="value">{{ analysis.kpi_option_2.cost_per_person_zone_2 | currency:'EUR':'symbol':'1.2-2' }}</span>
+                        <span class="value">{{ analysis.kpi_option_2.cost_per_person_zone_2 | number:'1.0-0' }} FCFA</span>
                     </div>
                     <div class="kpi-item">
                         <span class="label">Coût Moyen / Pers (Zone 3)</span>
-                        <span class="value">{{ analysis.kpi_option_2.cost_per_person_zone_3 | currency:'EUR':'symbol':'1.2-2' }}</span>
+                        <span class="value">{{ analysis.kpi_option_2.cost_per_person_zone_3 | number:'1.0-0' }} FCFA</span>
                     </div>
                     <div class="divider"></div>
                     <div class="kpi-item highlight">
