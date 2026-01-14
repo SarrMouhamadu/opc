@@ -208,7 +208,8 @@ export class DashboardHomeComponent {
         },
         error: (err) => {
             console.error("Error fetching KPI:", err);
-            this.snackBar.open("Erreur lors du calcul des KPI", "Fermer", { duration: 3000 });
+            const msg = err.error?.detail || err.message || "Erreur inconnue lors du calcul";
+            this.snackBar.open(`Erreur KPI: ${msg}`, "Fermer", { duration: 10000 }); // Longer duration to read
             this.loading = false;
         }
     });
