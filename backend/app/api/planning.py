@@ -129,6 +129,10 @@ async def upload_planning(file: UploadFile = File(...)):
         # Convert to dictionary for preview (limit to first 50 rows)
         preview_data = df.head(50).fillna("").to_dict(orient="records")
         
+        # Log the event
+        from app.core.logger import log_event
+        log_event("UPLOAD", f"Fichier importé: {file.filename} ({len(df)} lignes)")
+
         return {
             "filename": file.filename,
             "row_count": len(df),

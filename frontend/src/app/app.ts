@@ -6,7 +6,7 @@ import { MatButtonModule } from '@angular/material/button'; // Added for logout 
 import { MatMenuModule } from '@angular/material/menu'; // Added for user menu
 import { UploadPlanning } from './components/upload-planning/upload-planning';
 import { SettingsComponent } from './components/settings/settings';
-import { CostComparisonComponent } from './components/cost-comparison/cost-comparison';
+
 import { OptimizationDashboardComponent } from './components/optimization-dashboard/optimization-dashboard';
 import { DashboardHomeComponent } from './components/dashboard-home/dashboard-home';
 import { HistoryViewComponent } from './components/history-view/history-view';
@@ -24,7 +24,7 @@ import { AuthService } from './services/auth.service';
     MatMenuModule,
     UploadPlanning, 
     SettingsComponent, 
-    CostComparisonComponent, 
+ 
     OptimizationDashboardComponent, 
     DashboardHomeComponent, 
     HistoryViewComponent,
@@ -54,10 +54,7 @@ import { AuthService } from './services/auth.service';
             <mat-icon>calendar_today</mat-icon>
             <span>Planning</span>
           </a>
-          <a class="nav-item" [class.active]="currentView() === 'comparison'" (click)="currentView.set('comparison')">
-            <mat-icon>analytics</mat-icon>
-            <span>Comparaison</span>
-          </a>
+
           <a class="nav-item" [class.active]="currentView() === 'optimization'" (click)="currentView.set('optimization')">
             <mat-icon>auto_graph</mat-icon>
             <span>Optimisation</span>
@@ -101,7 +98,6 @@ import { AuthService } from './services/auth.service';
         <div class="content-scroll">
           <app-dashboard-home *ngIf="currentView() === 'dashboard'" (goToUpload)="currentView.set('planning')" />
           <app-upload-planning *ngIf="currentView() === 'planning'" (uploadSuccess)="currentView.set('optimization')" />
-          <app-cost-comparison *ngIf="currentView() === 'comparison'" />
           <app-optimization-dashboard *ngIf="currentView() === 'optimization'" />
           <app-settings *ngIf="currentView() === 'settings'" />
           <app-history-view *ngIf="currentView() === 'history'" />
@@ -264,7 +260,7 @@ export class App {
     switch (this.currentView()) {
       case 'dashboard': return "Vue d'Ensemble";
       case 'planning': return "Gestion du Planning";
-      case 'comparison': return "Analyse & Coûts";
+
       case 'optimization': return "Optimisation & Simulation";
       case 'settings': return "Configuration";
       case 'history': return "Historique & Suivi";

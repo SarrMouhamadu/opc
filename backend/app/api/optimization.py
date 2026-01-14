@@ -161,6 +161,10 @@ async def analyze_optimization(planning_data: List[Dict[str, Any]], settings: Se
     total_cost = sum(g['cost'] for g in groups)
     avg_occupancy = sum(g['occupancy'] for g in groups) / total_vehicles if total_vehicles > 0 else 0
     
+    # Log the optimization event
+    from app.core.logger import log_event
+    log_event("OPTIMIZATION", f"Simulation lancée: {len(groups)} véhicules, Coût total: {total_cost} FCFA")
+
     return OptimizationResult(
         total_vehicles=total_vehicles,
         avg_occupancy_rate=round(avg_occupancy, 2),
