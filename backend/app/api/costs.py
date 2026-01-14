@@ -150,21 +150,39 @@ async def calculate_costs(planning_data: List[Dict[str, Any]], settings: Setting
         # But for KPI attribution we need to be smart.
         max_zone = int(group["Zone"].max())
 
-        # Logic: > 4 -> Hiace (13), <= 4 -> Berline (4)
+        # Dynamic Bin Packing (Best Fit)
+        # Sort available vehicles by capacity to make decisions
+        valid_vehicles = sorted([v for v in settings.vehicle_types if v.capacity > 0], key=lambda x: x.capacity)
+
+        if not valid_vehicles:
+            # Fallback to prevent infinite loop or crash if no vehicles configured
+            # Assume a default cost/vehicle to show *something* or just break
+            remaining = 0 
+
         while remaining > 0:
-            if remaining <= 4:
-                v = next(v for v in settings.vehicle_types if v.name == "Berline")
-                used = 4 # Capacity added
-                remaining = 0
-            else:
-                v = next(v for v in settings.vehicle_types if "hiace" in v.name.lower())
-                used = v.capacity
-                remaining -= v.capacity
+            selected_v = None
             
-            p = v.zone_prices.get(max_zone, v.base_price)
+            # Strategy:
+            # 1. If we can fit the remainder in a single vehicle, find the smallest one that fits (Best Fit)
+            # 2. If remainder is huge, use the largest vehicle available to minimize vehicle count (Greedy)
+            
+            candidates_fitting = [v for v in valid_vehicles if v.capacity >= remaining]
+            
+            if candidates_fitting:
+                # Found vehicles that can take everyone left. Pick the smallest capacity (usually cheapest)
+                selected_v = candidates_fitting[0]
+            else:
+                # Remainder is too big for any single vehicle. Pick the largest vehicle to chip away the most.
+                selected_v = valid_vehicles[-1]
+            
+            # Apply cost
+            p = selected_v.zone_prices.get(max_zone, selected_v.base_price)
             group_cost += p
             group_vehicles += 1
-            group_capacity += v.capacity
+            group_capacity += selected_v.capacity
+            
+            # Decrement remainder
+            remaining -= selected_v.capacity
         
         op1_total_cost += group_cost
         op1_total_vehicles += group_vehicles
