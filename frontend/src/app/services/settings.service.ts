@@ -17,7 +17,7 @@ export interface Settings {
   providedIn: 'root'
 })
 export class SettingsService {
-  private apiUrl = 'http://localhost:8000/settings';
+  private apiUrl = 'http://51.255.60.133:8000/settings';
 
   constructor(private http: HttpClient) {}
 

@@ -6,7 +6,7 @@ import { Observable, tap } from 'rxjs';
   providedIn: 'root'
 })
 export class PlanningService {
-  private apiUrl = 'http://localhost:8000/planning';
+  private apiUrl = 'http://51.255.60.133:8000/planning';
   
   // Shared state for the uploaded planning
   currentPlanning = signal<any[]>([]);

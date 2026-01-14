@@ -2,7 +2,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../environments/environment';
 
 export interface LogEntry {
   timestamp: string;
@@ -15,7 +14,7 @@ export interface LogEntry {
   providedIn: 'root'
 })
 export class LogsService {
-  private apiUrl = `${environment.apiUrl}/logs`;
+  private apiUrl = 'http://51.255.60.133:8000/logs';
 
   constructor(private http: HttpClient) {}
 
