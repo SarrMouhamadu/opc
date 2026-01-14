@@ -100,7 +100,7 @@ import { AuthService } from './services/auth.service';
 
         <div class="content-scroll">
           <app-dashboard-home *ngIf="currentView() === 'dashboard'" (goToUpload)="currentView.set('planning')" />
-          <app-upload-planning *ngIf="currentView() === 'planning'" />
+          <app-upload-planning *ngIf="currentView() === 'planning'" (uploadSuccess)="currentView.set('optimization')" />
           <app-cost-comparison *ngIf="currentView() === 'comparison'" />
           <app-optimization-dashboard *ngIf="currentView() === 'optimization'" />
           <app-settings *ngIf="currentView() === 'settings'" />

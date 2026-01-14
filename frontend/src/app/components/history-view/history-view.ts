@@ -42,8 +42,8 @@ import { HistoryService, HistoryEntry } from '../../services/history.service';
           
           <!-- Date Column -->
           <ng-container matColumnDef="date">
-            <th mat-header-cell *matHeaderCellDef> Date </th>
-            <td mat-cell *matCellDef="let element"> {{element.date | date:'medium'}} </td>
+            <th mat-header-cell *matHeaderCellDef> Date & Heure </th>
+            <td mat-cell *matCellDef="let element"> {{element.date | date:'dd/MM/yyyy HH:mm'}} </td>
           </ng-container>
 
           <!-- Vehicles Column -->

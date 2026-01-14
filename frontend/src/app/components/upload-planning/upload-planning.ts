@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
@@ -202,6 +202,8 @@ import { PlanningService } from '../../services/planning.service';
   `,
 })
 export class UploadPlanning {
+  @Output() uploadSuccess = new EventEmitter<void>();
+  
   selectedFile: File | null = null;
   uploading = false;
   previewData: any[] = [];
@@ -258,10 +260,11 @@ export class UploadPlanning {
         this.totalRows = res.row_count;
         this.uploading = false;
         this.snackBar.open('Fichier importé avec succès', 'Fermer', { duration: 3000 });
+        this.uploadSuccess.emit();
       },
       error: (err) => {
         this.uploading = false;
-        const message = err.error?.detail || 'Erreur lors de l\'importation';
+        const message = err.error?.detail || "Erreur lors de l'importation";
         this.snackBar.open(message, 'Fermer', { duration: 5000, panelClass: ['error-snackbar'] });
       }
     });
