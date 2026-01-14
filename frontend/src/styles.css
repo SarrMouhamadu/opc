@@ -1,1 +1,71 @@
-/* You can add global styles to this file, and also import other style files */
+/* Global Variables */
+:root {
+  /* Branding */
+  --primary-color: #4f46e5; /* Indigo 600 */
+  --primary-hover: #4338ca; /* Indigo 700 */
+  --secondary-color: #ec4899; /* Pink 500 */
+  
+  /* Neutral */
+  --bg-app: #f3f4f6; /* Gray 100 */
+  --surface: #ffffff;
+  --text-main: #111827; /* Gray 900 */
+  --text-secondary: #6b7280; /* Gray 500 */
+  --border-color: #e5e7eb; /* Gray 200 */
+  
+  /* Status */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  /* Spacing & Radius */
+  --radius-md: 0.5rem;   /* 8px */
+  --radius-lg: 1rem;     /* 16px */
+  --font-family: 'Inter', sans-serif;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-family);
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+p {
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Material Overrides for Premium Feel */
+.mat-mdc-card {
+  background: var(--surface) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-sm) !important;
+  border: 1px solid var(--border-color);
+}
+
+.mat-mdc-unelevated-button.mat-primary {
+  --mdc-filled-button-container-color: var(--primary-color) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 0 24px !important;
+  height: 44px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.3px !important;
+}
+
+.mat-mdc-outlined-button {
+  border-radius: var(--radius-md) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-main) !important;
+}

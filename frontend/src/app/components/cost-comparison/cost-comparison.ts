@@ -20,75 +20,113 @@ import { PlanningService } from '../../services/planning.service';
     MatDividerModule
   ],
   template: `
-    <div class="comparison-container">
-      <div class="header">
-        <h2>Comparaison des Options de Transport</h2>
-        <button mat-raised-button color="accent" (click)="calculate()" [disabled]="loading || !hasData()">
-          <mat-icon>calculate</mat-icon> Lancer le calcul
+    <div class="page-container">
+      <header class="page-header">
+        <div class="header-content">
+          <h2>Analyse Comparative</h2>
+          <p>Estimation des coûts selon les différentes options de transport.</p>
+        </div>
+        <button mat-flat-button color="primary" (click)="calculate()" [disabled]="loading || !hasData()">
+          <mat-icon>play_arrow</mat-icon> Lancer le calcul
         </button>
+      </header>
+
+      <div *ngIf="!hasData()" class="empty-state">
+        <div class="empty-icon">
+          <mat-icon>analytics</mat-icon>
+        </div>
+        <h3>Aucune donnée à analyser</h3>
+        <p>Veuillez d'abord importer un planning.</p>
       </div>
 
-      <div *ngIf="!hasData()" class="no-data">
-        <mat-icon>info</mat-icon>
-        <p>Veuillez d'abord uploader un planning dans l'onglet "Planning".</p>
-      </div>
-
-      <mat-progress-bar mode="indeterminate" *ngIf="loading"></mat-progress-bar>
+      <mat-progress-bar mode="indeterminate" *ngIf="loading" class="loading-bar"></mat-progress-bar>
 
       <div class="dashboard" *ngIf="results">
-        <!-- Main Summary Cards -->
-        <div class="cards-grid">
-          <mat-card class="summary-card option1">
-            <mat-card-header>
-              <mat-card-title>Option 1 : Forfait Véhicule</mat-card-title>
-            </mat-card-header>
-            <mat-card-content>
-              <div class="total-value">{{ results.option_1_total | currency:'EUR' }}</div>
-              <p>Basé sur le forfait mensuel par zone max.</p>
-            </mat-card-content>
-          </mat-card>
+        <!-- Stats Widgets -->
+        <div class="stats-grid">
+          <!-- Option 1 Widget -->
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">Option 1</span>
+              <mat-icon class="option-icon opt1">directions_car</mat-icon>
+            </div>
+            <div class="stat-value">{{ results.option_1_total | currency:'EUR':'symbol':'1.0-0' }}</div>
+            <div class="stat-desc">Forfait Véhicule</div>
+            <div class="stat-bar-bg">
+              <div class="stat-bar-fill opt1" [style.width.%]="getPercentage(results.option_1_total)"></div>
+            </div>
+          </div>
 
-          <mat-card class="summary-card option2">
-            <mat-card-header>
-              <mat-card-title>Option 2 : Prise en charge</mat-card-title>
-            </mat-card-header>
-            <mat-card-content>
-              <div class="total-value">{{ results.option_2_total | currency:'EUR' }}</div>
-              <p>Basé sur un prix fixe par trajet/employé.</p>
-            </mat-card-content>
-          </mat-card>
+          <!-- Option 2 Widget -->
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">Option 2</span>
+              <mat-icon class="option-icon opt2">directions_bus</mat-icon>
+            </div>
+            <div class="stat-value">{{ results.option_2_total | currency:'EUR':'symbol':'1.0-0' }}</div>
+            <div class="stat-desc">Prise en charge</div>
+            <div class="stat-bar-bg">
+              <div class="stat-bar-fill opt2" [style.width.%]="getPercentage(results.option_2_total)"></div>
+            </div>
+          </div>
 
-          <mat-card class="summary-card savings" [class.positive]="results.savings > 0">
-            <mat-card-header>
-              <mat-card-title>Économie Potentielle</mat-card-title>
-            </mat-card-header>
-            <mat-card-content>
-              <div class="total-value">{{ results.savings | currency:'EUR' }}</div>
-              <p>Choix recommandé : <strong>{{ results.best_option }}</strong></p>
-            </mat-card-content>
-          </mat-card>
+          <!-- Savings Widget -->
+          <div class="stat-card highlight">
+            <div class="stat-header">
+              <span class="stat-label">Économie Potentielle</span>
+              <mat-icon class="savings-icon">savings</mat-icon>
+            </div>
+            <div class="stat-value savings-text">+{{ results.savings | currency:'EUR':'symbol':'1.0-0' }}</div>
+            <div class="stat-desc">
+              Meilleure option : <strong>{{ results.best_option }}</strong>
+            </div>
+          </div>
         </div>
 
-        <!-- Details Section -->
-        <mat-card class="details-card">
-          <h3>Détails du calcul (Extraits)</h3>
-          <div class="details-grid">
-            <div class="details-list">
-              <h4>Option 1 (Forfait Véhicule)</h4>
-              <div *ngFor="let item of results.details_option_1" class="detail-item">
-                <span class="date">{{ item.date }} {{ item.time }}</span>
-                <span class="count">{{ item.count }} pers.</span>
-                <span class="zone">Zone {{ item.max_zone }}</span>
-                <span class="price">{{ item.cost | currency:'EUR' }}</span>
+        <!-- Detailed Analysis -->
+        <mat-card class="details-section">
+          <div class="section-header">
+            <h3>Détail des Calculs</h3>
+          </div>
+          <div class="details-content">
+            <div class="grid-2-col">
+              <!-- Detail Col 1 -->
+              <div class="detail-column">
+                <div class="col-header">
+                  <h4>Option 1 (Véhicules)</h4>
+                  <span class="badge opt1">Détails</span>
+                </div>
+                <div class="list-container">
+                  <div *ngFor="let item of results.details_option_1" class="list-item">
+                    <div class="item-main">
+                      <span class="item-date">{{ item.date }}</span>
+                      <span class="item-meta">{{ item.time }} • {{ item.count }} pers.</span>
+                    </div>
+                    <div class="item-end">
+                      <span class="zone-badge">Zone {{ item.max_zone }}</span>
+                      <span class="item-price">{{ item.cost | currency:'EUR':'symbol':'1.0-0' }}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-            <mat-divider [vertical]="true"></mat-divider>
-            <div class="details-list">
-              <h4>Option 2 (Prise en charge)</h4>
-              <div *ngFor="let item of results.details_option_2" class="detail-item">
-                <span>{{ item.count }} trajets</span>
-                <span>x {{ item.unit_price | currency:'EUR' }}</span>
-                <span class="price">{{ item.total | currency:'EUR' }}</span>
+
+              <!-- Detail Col 2 -->
+              <div class="detail-column">
+                <div class="col-header">
+                  <h4>Option 2 (Bus)</h4>
+                  <span class="badge opt2">Global</span>
+                </div>
+                 <div class="list-container">
+                  <div *ngFor="let item of results.details_option_2" class="list-item">
+                    <div class="item-main">
+                      <span class="item-date">Total Mensuel</span>
+                      <span class="item-meta">{{ item.count }} trajets facturés</span>
+                    </div>
+                    <div class="item-end">
+                      <span class="item-price">{{ item.total | currency:'EUR':'symbol':'1.0-0' }}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -97,22 +135,135 @@ import { PlanningService } from '../../services/planning.service';
     </div>
   `,
   styles: `
-    .comparison-container { padding: 24px; }
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
-    .no-data { text-align: center; padding: 48px; color: #666; }
-    .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 32px; }
-    .summary-card { border-radius: 16px; border-left: 6px solid #ccc; transition: transform 0.2s; }
-    .summary-card:hover { transform: translateY(-4px); }
-    .option1 { border-left-color: #3f51b5; }
-    .option2 { border-left-color: #673ab7; }
-    .savings.positive { border-left-color: #4caf50; background: #f1f8e9; }
-    .total-value { font-size: 36px; font-weight: 600; margin: 16px 0; color: #333; }
-    .details-card { padding: 24px; border-radius: 16px; }
-    .details-grid { display: flex; gap: 32px; margin-top: 24px; }
-    .details-list { flex: 1; }
-    .detail-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
-    .detail-item .price { font-weight: 500; color: #2e7d32; }
-    h4 { color: #666; margin-bottom: 16px; }
+    .page-container {
+      padding: 32px 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+    }
+    .header-content h2 { font-size: 24px; margin-bottom: 4px; color: var(--text-main); }
+    .header-content p { color: var(--text-secondary); margin: 0; font-size: 14px; }
+
+    .empty-state {
+      text-align: center;
+      padding: 64px 0;
+      color: var(--text-secondary);
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      border: 1px dashed var(--border-color);
+    }
+    .empty-icon {
+      width: 64px;
+      height: 64px;
+      background: #f3f4f6;
+      border-radius: 50%;
+      margin: 0 auto 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .empty-icon mat-icon { font-size: 32px; width: 32px; height: 32px; color: #9ca3af; }
+
+    .loading-bar { margin-bottom: 24px; border-radius: 4px; }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+    }
+    .stat-card.highlight {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      border: none;
+    }
+    .stat-card.highlight .stat-label, 
+    .stat-card.highlight .stat-value, 
+    .stat-card.highlight .stat-desc,
+    .stat-card.highlight strong { color: white; }
+    .stat-card.highlight .savings-icon { color: rgba(255,255,255,0.8); }
+
+    .stat-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+    .stat-label { font-size: 13px; font-weight: 600; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.5px; }
+    .option-icon { color: var(--text-secondary); }
+    .option-icon.opt1 { color: #4f46e5; }
+    .option-icon.opt2 { color: #ec4899; }
+
+    .stat-value { font-size: 32px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; }
+    .stat-desc { font-size: 14px; color: var(--text-secondary); }
+
+    .stat-bar-bg {
+      height: 6px;
+      background: #f3f4f6;
+      border-radius: 3px;
+      margin-top: 16px;
+      overflow: hidden;
+    }
+    .stat-bar-fill { height: 100%; border-radius: 3px; }
+    .stat-bar-fill.opt1 { background: #4f46e5; }
+    .stat-bar-fill.opt2 { background: #ec4899; }
+
+    /* Details Section */
+    .details-section {
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+    .section-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-color);
+      background: #fcfcfc;
+    }
+    .section-header h3 { font-size: 16px; margin: 0; color: var(--text-main); }
+    
+    .details-content { padding: 0; }
+    .grid-2-col { display: grid; grid-template-columns: 1fr 1fr; }
+    
+    .detail-column { padding: 24px; }
+    .detail-column:first-child { border-right: 1px solid var(--border-color); }
+
+    .col-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .col-header h4 { font-size: 14px; color: var(--text-secondary); margin: 0; font-weight: 600; }
+    
+    .badge { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+    .badge.opt1 { background: #eef2ff; color: #4f46e5; }
+    .badge.opt2 { background: #fdf2f8; color: #ec4899; }
+
+    .list-container { display: flex; flex-direction: column; gap: 0; }
+    .list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .list-item:last-child { border-bottom: none; }
+    
+    .item-main { display: flex; flex-direction: column; }
+    .item-date { font-weight: 500; font-size: 14px; }
+    .item-meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    
+    .item-end { display: flex; align-items: center; gap: 12px; }
+    .zone-badge { font-size: 11px; background: #f3f4f6; padding: 2px 6px; border-radius: 4px; color: var(--text-secondary); }
+    .item-price { font-weight: 600; color: var(--text-main); }
   `
 })
 export class CostComparisonComponent {
@@ -139,5 +290,11 @@ export class CostComparisonComponent {
         this.loading = false;
       }
     });
+  }
+
+  getPercentage(value: number): number {
+    if (!this.results) return 0;
+    const max = Math.max(this.results.option_1_total, this.results.option_2_total);
+    return (value / max) * 100;
   }
 }
