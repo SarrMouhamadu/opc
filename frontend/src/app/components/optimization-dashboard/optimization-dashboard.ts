@@ -86,7 +86,7 @@ import { PlanningService } from '../../services/planning.service';
           <div class="kpi-icon bg-teal">
             <mat-icon>payments</mat-icon>
           </div>
-          <div class="kpi-value">{{ results.total_cost_estimated | currency:'EUR':'symbol':'1.0-0' }}</div>
+          <div class="kpi-value">{{ results.total_cost_estimated | number:'1.0-0' }} FCFA</div>
           <div class="kpi-label">Coût Estimé (Opt 1)</div>
         </div>
       </div>
@@ -118,7 +118,7 @@ import { PlanningService } from '../../services/planning.service';
                   </div>
                 </div>
                 <div class="group-details">
-                  <span class="cost">{{ group.cost | currency:'EUR' }}</span>
+                  <span class="cost">{{ group.cost | number:'1.0-0' }} FCFA</span>
                 </div>
               </div>
             </div>

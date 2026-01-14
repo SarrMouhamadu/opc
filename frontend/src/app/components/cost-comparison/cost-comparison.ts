@@ -50,7 +50,7 @@ import { PlanningService } from '../../services/planning.service';
               <span class="stat-label">Option 1</span>
               <mat-icon class="option-icon opt1">directions_car</mat-icon>
             </div>
-            <div class="stat-value">{{ results.option_1_total | currency:'EUR':'symbol':'1.0-0' }}</div>
+            <div class="stat-value">{{ results.option_1_total | number:'1.0-0' }} FCFA</div>
             <div class="stat-desc">Forfait Véhicule</div>
             <div class="stat-bar-bg">
               <div class="stat-bar-fill opt1" [style.width.%]="getPercentage(results.option_1_total)"></div>
@@ -63,7 +63,7 @@ import { PlanningService } from '../../services/planning.service';
               <span class="stat-label">Option 2</span>
               <mat-icon class="option-icon opt2">directions_bus</mat-icon>
             </div>
-            <div class="stat-value">{{ results.option_2_total | currency:'EUR':'symbol':'1.0-0' }}</div>
+            <div class="stat-value">{{ results.option_2_total | number:'1.0-0' }} FCFA</div>
             <div class="stat-desc">Prise en charge</div>
             <div class="stat-bar-bg">
               <div class="stat-bar-fill opt2" [style.width.%]="getPercentage(results.option_2_total)"></div>
@@ -76,7 +76,7 @@ import { PlanningService } from '../../services/planning.service';
               <span class="stat-label">Économie Potentielle</span>
               <mat-icon class="savings-icon">savings</mat-icon>
             </div>
-            <div class="stat-value savings-text">+{{ results.savings | currency:'EUR':'symbol':'1.0-0' }}</div>
+            <div class="stat-value savings-text">+{{ results.savings | number:'1.0-0' }} FCFA</div>
             <div class="stat-desc">
               Meilleure option : <strong>{{ results.best_option }}</strong>
             </div>
@@ -104,7 +104,7 @@ import { PlanningService } from '../../services/planning.service';
                     </div>
                     <div class="item-end">
                       <span class="zone-badge">Zone {{ item.max_zone }}</span>
-                      <span class="item-price">{{ item.cost | currency:'EUR':'symbol':'1.0-0' }}</span>
+                      <span class="item-price">{{ item.cost | number:'1.0-0' }} FCFA</span>
                     </div>
                   </div>
                 </div>
@@ -123,7 +123,7 @@ import { PlanningService } from '../../services/planning.service';
                       <span class="item-meta">{{ item.count }} trajets facturés</span>
                     </div>
                     <div class="item-end">
-                      <span class="item-price">{{ item.total | currency:'EUR':'symbol':'1.0-0' }}</span>
+                      <span class="item-price">{{ item.total | number:'1.0-0' }} FCFA</span>
                     </div>
                   </div>
                 </div>

@@ -55,13 +55,13 @@ import { HistoryService, HistoryEntry } from '../../services/history.service';
           <!-- Cost Column -->
           <ng-container matColumnDef="cost">
             <th mat-header-cell *matHeaderCellDef> Coût Total </th>
-            <td mat-cell *matCellDef="let element" class="font-bold"> {{element.total_cost | currency:'EUR':'symbol':'1.0-0'}} </td>
+            <td mat-cell *matCellDef="let element" class="font-bold"> {{element.total_cost | number:'1.0-0'}} FCFA </td>
           </ng-container>
 
           <!-- Savings Column -->
           <ng-container matColumnDef="savings">
             <th mat-header-cell *matHeaderCellDef> Économies </th>
-            <td mat-cell *matCellDef="let element" class="text-success"> +{{element.savings | currency:'EUR':'symbol':'1.0-0'}} </td>
+            <td mat-cell *matCellDef="let element" class="text-success"> +{{element.savings | number:'1.0-0'}} FCFA </td>
           </ng-container>
 
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>

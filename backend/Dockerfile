@@ -21,6 +21,7 @@ EXPOSE 8000
 
 # Create a non-root user and set permissions
 RUN adduser --disabled-password --gecos '' appuser && \
+    mkdir -p /app/data && \
     chown -R appuser:appuser /app
 USER appuser
 
