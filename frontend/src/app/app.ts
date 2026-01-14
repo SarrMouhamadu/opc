@@ -5,11 +5,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { UploadPlanning } from './components/upload-planning/upload-planning';
 import { SettingsComponent } from './components/settings/settings';
 import { CostComparisonComponent } from './components/cost-comparison/cost-comparison';
+import { OptimizationDashboardComponent } from './components/optimization-dashboard/optimization-dashboard';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, MatIconModule, UploadPlanning, SettingsComponent, CostComparisonComponent],
+  imports: [CommonModule, RouterOutlet, MatIconModule, UploadPlanning, SettingsComponent, CostComparisonComponent, OptimizationDashboardComponent],
   template: `
     <div class="app-layout">
       <!-- Sidebar -->
@@ -29,6 +30,10 @@ import { CostComparisonComponent } from './components/cost-comparison/cost-compa
           <a class="nav-item" [class.active]="currentView() === 'comparison'" (click)="currentView.set('comparison')">
             <mat-icon>analytics</mat-icon>
             <span>Analyse</span>
+          </a>
+          <a class="nav-item" [class.active]="currentView() === 'optimization'" (click)="currentView.set('optimization')">
+            <mat-icon>auto_graph</mat-icon>
+            <span>Optimisation</span>
           </a>
           <a class="nav-item" [class.active]="currentView() === 'settings'" (click)="currentView.set('settings')">
             <mat-icon>tune</mat-icon>
@@ -59,6 +64,7 @@ import { CostComparisonComponent } from './components/cost-comparison/cost-compa
         <div class="content-scroll">
           <app-upload-planning *ngIf="currentView() === 'planning'" />
           <app-cost-comparison *ngIf="currentView() === 'comparison'" />
+          <app-optimization-dashboard *ngIf="currentView() === 'optimization'" />
           <app-settings *ngIf="currentView() === 'settings'" />
           <router-outlet />
         </div>
@@ -211,12 +217,13 @@ import { CostComparisonComponent } from './components/cost-comparison/cost-compa
   `,
 })
 export class App {
-  currentView = signal<'planning' | 'comparison' | 'settings'>('planning');
+  currentView = signal<'planning' | 'comparison' | 'optimization' | 'settings'>('planning');
 
   getViewTitle() {
     switch (this.currentView()) {
       case 'planning': return 'Gestion du Planning';
       case 'comparison': return 'Analyse & Coûts';
+      case 'optimization': return 'Optimisation & Simulation';
       case 'settings': return 'Configuration';
       default: return 'OptiNav';
     }
