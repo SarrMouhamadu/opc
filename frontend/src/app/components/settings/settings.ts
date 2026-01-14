@@ -60,11 +60,11 @@ import { SettingsService, Settings } from '../../services/settings.service';
               <p>Coût unitaire pour le transport en commun/bus.</p>
             </div>
              <div class="card-content">
-               <!-- Placeholder: Assuming we might add this field to API later or use a default -->
-               <div class="info-box">
-                 <mat-icon>info</mat-icon>
-                 <span>Le coût par prise en charge est actuellement fixé par défaut ou géré côté backend. Une future mise à jour permettra de le modifier ici.</span>
-               </div>
+               <mat-form-field appearance="outline" class="full-width">
+                 <mat-label>Prix par Ligne de Bus (13 places)</mat-label>
+                 <input matInput type="number" [(ngModel)]="settings.option_2_bus_price">
+                 <mat-hint>Coût forfaitaire pour un bus de ligne (ex: 35000 FCFA)</mat-hint>
+               </mat-form-field>
              </div>
           </section>
         </div>

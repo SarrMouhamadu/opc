@@ -10,6 +10,7 @@ export interface VehicleType {
 
 export interface Settings {
   grouping_window_minutes: number;
+  option_2_bus_price?: number;
   vehicle_types: VehicleType[];
 }
 
