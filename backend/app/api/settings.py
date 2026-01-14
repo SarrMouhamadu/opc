@@ -11,7 +11,7 @@ class VehicleType(BaseModel):
     zone_prices: dict[int, float] = {1: 10.0, 2: 15.0, 3: 20.0} # Zone prices for this vehicle
 
 class Settings(BaseModel):
-    grouping_window_minutes: int = 30
+    grouping_window_minutes: int = 20
     option_1_enabled: bool = True
     option_2_enabled: bool = True
     option_2_pickup_price: float = 0.0 # Deprecated

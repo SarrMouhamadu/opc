@@ -1,9 +1,12 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, TemplateRef, ViewChild, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button'; // Added for logout button
-import { MatMenuModule } from '@angular/material/menu'; // Added for user menu
+import { MatButtonModule } from '@angular/material/button';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatBadgeModule } from '@angular/material/badge';
+
 import { UploadPlanning } from './components/upload-planning/upload-planning';
 import { SettingsComponent } from './components/settings/settings';
 
@@ -12,6 +15,7 @@ import { DashboardHomeComponent } from './components/dashboard-home/dashboard-ho
 import { HistoryViewComponent } from './components/history-view/history-view';
 import { LoginComponent } from './components/login/login';
 import { AuthService } from './services/auth.service';
+import { LogsService, LogEntry } from './services/logs.service';
 
 @Component({
   selector: 'app-root',
@@ -22,9 +26,10 @@ import { AuthService } from './services/auth.service';
     MatIconModule, 
     MatButtonModule,
     MatMenuModule,
+    MatDialogModule,
+    MatBadgeModule,
     UploadPlanning, 
     SettingsComponent, 
- 
     OptimizationDashboardComponent, 
     DashboardHomeComponent, 
     HistoryViewComponent,
@@ -90,8 +95,25 @@ import { AuthService } from './services/auth.service';
         <header class="top-bar">
           <h2>{{ getViewTitle() }}</h2>
           <div class="actions">
-            <button class="icon-btn"><mat-icon>notifications</mat-icon></button>
-            <button class="icon-btn"><mat-icon>help_outline</mat-icon></button>
+            <button class="icon-btn" [matMenuTriggerFor]="notificationsMenu" (click)="loadNotifications()">
+              <mat-icon [matBadge]="recentLogs.length" matBadgeSize="small" matBadgeColor="warn" [matBadgeHidden]="recentLogs.length === 0">notifications</mat-icon>
+            </button>
+            <mat-menu #notificationsMenu="matMenu" class="notification-menu">
+              <div class="menu-header" (click)="$event.stopPropagation()">
+                <h3>Activités Récentes</h3>
+              </div>
+              <div *ngFor="let log of recentLogs" mat-menu-item class="log-item">
+                <mat-icon class="log-icon">info</mat-icon>
+                <div class="log-content">
+                  <div class="log-title">{{ log.action }}</div>
+                  <div class="log-time">{{ log.timestamp | date:'short' }}</div>
+                </div>
+              </div>
+              <div mat-menu-item *ngIf="recentLogs.length === 0" disabled>Aucune notification</div>
+              <button mat-menu-item (click)="currentView.set('history')">Voir tout l'historique</button>
+            </mat-menu>
+
+            <button class="icon-btn" (click)="openHelp(helpDialog)"><mat-icon>help_outline</mat-icon></button>
           </div>
         </header>
 
@@ -105,6 +127,28 @@ import { AuthService } from './services/auth.service';
         </div>
       </main>
     </div>
+
+    <!-- Help Dialog Template -->
+    <ng-template #helpDialog>
+      <h2 mat-dialog-title>Aide & Support</h2>
+      <mat-dialog-content>
+        <p>Bienvenue sur <strong>OptiNav</strong>, votre plateforme d'optimisation de transport.</p>
+        
+        <h3>Guide Rapide</h3>
+        <ul>
+          <li><strong>Planning</strong> : Importez vos fichiers Excel/CSV.</li>
+          <li><strong>Optimisation</strong> : Lancez des simulations de regroupement.</li>
+          <li><strong>Historique</strong> : Consultez vos rapports précédents.</li>
+        </ul>
+
+        <h3>Support Technique</h3>
+        <p>Pour toute assistance technique, veuillez contacter l'équipe IT :</p>
+        <p>📧 support@optinav.com<br>📞 +221 77 000 00 00</p>
+      </mat-dialog-content>
+      <mat-dialog-actions align="end">
+        <button mat-button mat-dialog-close>Fermer</button>
+      </mat-dialog-actions>
+    </ng-template>
   `,
   styles: `
     .app-layout {
@@ -243,6 +287,26 @@ import { AuthService } from './services/auth.service';
       cursor: pointer;
       padding: 8px;
     }
+    
+    .menu-header {
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 4px;
+    }
+    .menu-header h3 { margin: 0; font-size: 14px; color: var(--text-main); }
+    
+    .log-item {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        height: auto;
+        padding-top: 8px;
+        padding-bottom: 8px;
+    }
+    .log-content { display: flex; flex-direction: column; line-height: 1.2; }
+    .log-title { font-weight: 500; font-size: 13px; }
+    .log-time { font-size: 11px; color: var(--text-secondary); }
+    .log-icon { font-size: 18px; width: 18px; height: 18px; color: var(--primary-color); margin-right: 0 !important; }
 
     .content-scroll {
       flex: 1;
@@ -251,10 +315,32 @@ import { AuthService } from './services/auth.service';
     }
   `,
 })
-export class App {
+export class App implements OnInit {
   currentView = signal<'dashboard' | 'planning' | 'comparison' | 'optimization' | 'settings' | 'history'>('dashboard');
+  recentLogs: LogEntry[] = [];
 
-  constructor(public authService: AuthService) {}
+  constructor(
+    public authService: AuthService,
+    private logsService: LogsService,
+    private dialog: MatDialog
+  ) {}
+
+  ngOnInit() {
+    this.loadNotifications();
+  }
+
+  loadNotifications() {
+     if (this.authService.isAuthenticated()) {
+        this.logsService.getLogs().subscribe(logs => {
+          // Take last 5
+          this.recentLogs = logs.slice(0, 5); 
+        });
+     }
+  }
+
+  openHelp(template: TemplateRef<any>) {
+    this.dialog.open(template, { width: '400px' });
+  }
 
   getViewTitle() {
     switch (this.currentView()) {
