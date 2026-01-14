@@ -19,13 +19,25 @@ async def upload_planning(file: UploadFile = File(...)):
     # Canonical Mapping (Target Name -> List of acceptable aliases)
     # Canonical Mapping (Target Name -> List of acceptable aliases)
     COLUMN_MAPPING = {
+        "Employee ID": ["employeeid", "employee_id", "matricule", "employe", "id", "employee", "nom", "name", "salarie", "option1_berline_mensuel"], # 'nom' seems to be the employee name here based on context, or use strict mapping if risk of confusion. User file has 'Option1_Berline_Mensuel' which is COST? No wait.
+        # User columns: Domicile, Lieu de dépôt, Zone Domicile, Zone Lieu dépôt, Zone Max, Option1_Hiace_Mensuel, Option1_Berline_Mensuel, Option2_par_course
+        # Mapping inference:
+        # Domicile -> Pickup Point
+        # Lieu de dépôt -> Dropoff Point
+        # Zone Domicile / Zone Lieu dépôt -> Zone? 
+        # Missing: Employee ID (maybe they just count people or there is no ID?), Date, Time.
+        
+        # NOTE: The user's file seems to be a COST REFERENCE or a SUMMARY, not a detailed planning with times!
+        # OR it is a planning but with missing columns.
+        # Let's add aliases for what we see to at least pass mapping, but we might default Time.
+        
         "Employee ID": ["employeeid", "employee_id", "matricule", "employe", "id", "employee", "nom", "name", "salarie"],
         "Date": ["date", "jour", "day"],
         "Time": ["time", "heure", "horaire", "pickuptime", "heure_passage", "heure_depart", "depart", "h_depart", "heure_service"],
         "Pickup Point": ["pickuppoint", "pickup_point", "origine", "point_depart", "pickup", "point_ramassage", "lieu_depart", "domicile_zone", "domicile", "lieu_prise", "zone_domicile"],
-        "Dropoff Point": ["dropoffpoint", "dropoff_point", "destination", "point_arrivee", "dropoff", "point_depot", "lieu_arrivee", "lieu_depot_zone", "lieu_depot", "site", "zone_depot"],
-        "Zone": ["zone", "secteur", "area"],
-        "Ligne_Bus_Option_2": ["lignebusoption2", "ligne_bus_option_2", "ligne_bus", "bus_line", "ligne", "busline"]
+        "Dropoff Point": ["dropoffpoint", "dropoff_point", "destination", "point_arrivee", "dropoff", "point_depot", "lieu_arrivee", "lieu_depot_zone", "lieu_depot", "site", "zone_depot", "lieu_de_depot"],
+        "Zone": ["zone", "secteur", "area", "zone_domicile", "zone_max"],
+        "Ligne_Bus_Option_2": ["lignebusoption2", "ligne_bus_option_2", "ligne_bus", "bus_line", "ligne", "busline", "option2_par_course"]
     }
 
     try:
@@ -114,6 +126,13 @@ async def upload_planning(file: UploadFile = File(...)):
             from datetime import datetime
             df["Date"] = datetime.now().strftime("%Y-%m-%d")
             
+        if "Time" not in df.columns:
+            df["Time"] = "08:00" # Default time if missing
+            
+        if "Employee ID" not in df.columns:
+            # Generate dummy IDs or set Unknown
+            df["Employee ID"] = [f"Emp_{i+1}" for i in range(len(df))]
+
         if "Zone" not in df.columns:
             df["Zone"] = "Zone A" # Default zone
 
