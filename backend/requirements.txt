@@ -2,6 +2,7 @@ fastapi
 uvicorn
 pandas
 openpyxl
+reportlab
 python-multipart
 pydantic
 pydantic-settings

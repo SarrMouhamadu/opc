@@ -6,11 +6,12 @@ import { UploadPlanning } from './components/upload-planning/upload-planning';
 import { SettingsComponent } from './components/settings/settings';
 import { CostComparisonComponent } from './components/cost-comparison/cost-comparison';
 import { OptimizationDashboardComponent } from './components/optimization-dashboard/optimization-dashboard';
+import { DashboardHomeComponent } from './components/dashboard-home/dashboard-home';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, MatIconModule, UploadPlanning, SettingsComponent, CostComparisonComponent, OptimizationDashboardComponent],
+  imports: [CommonModule, RouterOutlet, MatIconModule, UploadPlanning, SettingsComponent, CostComparisonComponent, OptimizationDashboardComponent, DashboardHomeComponent],
   template: `
     <div class="app-layout">
       <!-- Sidebar -->
@@ -23,13 +24,17 @@ import { OptimizationDashboardComponent } from './components/optimization-dashbo
         </div>
 
         <nav class="nav-menu">
+          <a class="nav-item" [class.active]="currentView() === 'dashboard'" (click)="currentView.set('dashboard')">
+            <mat-icon>dashboard</mat-icon>
+            <span>Tableau de Bord</span>
+          </a>
           <a class="nav-item" [class.active]="currentView() === 'planning'" (click)="currentView.set('planning')">
             <mat-icon>calendar_today</mat-icon>
             <span>Planning</span>
           </a>
           <a class="nav-item" [class.active]="currentView() === 'comparison'" (click)="currentView.set('comparison')">
             <mat-icon>analytics</mat-icon>
-            <span>Analyse</span>
+            <span>Comparaison</span>
           </a>
           <a class="nav-item" [class.active]="currentView() === 'optimization'" (click)="currentView.set('optimization')">
             <mat-icon>auto_graph</mat-icon>
@@ -55,13 +60,13 @@ import { OptimizationDashboardComponent } from './components/optimization-dashbo
         <header class="top-bar">
           <h2>{{ getViewTitle() }}</h2>
           <div class="actions">
-            <!-- Placeholders for future header actions -->
             <button class="icon-btn"><mat-icon>notifications</mat-icon></button>
             <button class="icon-btn"><mat-icon>help_outline</mat-icon></button>
           </div>
         </header>
 
         <div class="content-scroll">
+          <app-dashboard-home *ngIf="currentView() === 'dashboard'" (goToUpload)="currentView.set('planning')" />
           <app-upload-planning *ngIf="currentView() === 'planning'" />
           <app-cost-comparison *ngIf="currentView() === 'comparison'" />
           <app-optimization-dashboard *ngIf="currentView() === 'optimization'" />
@@ -217,15 +222,16 @@ import { OptimizationDashboardComponent } from './components/optimization-dashbo
   `,
 })
 export class App {
-  currentView = signal<'planning' | 'comparison' | 'optimization' | 'settings'>('planning');
+  currentView = signal<'dashboard' | 'planning' | 'comparison' | 'optimization' | 'settings'>('dashboard');
 
   getViewTitle() {
     switch (this.currentView()) {
-      case 'planning': return 'Gestion du Planning';
-      case 'comparison': return 'Analyse & Coûts';
-      case 'optimization': return 'Optimisation & Simulation';
-      case 'settings': return 'Configuration';
-      default: return 'OptiNav';
+      case 'dashboard': return "Vue d'Ensemble";
+      case 'planning': return "Gestion du Planning";
+      case 'comparison': return "Analyse & Coûts";
+      case 'optimization': return "Optimisation & Simulation";
+      case 'settings': return "Configuration";
+      default: return "OptiNav";
     }
   }
 }

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from app.api.settings import get_settings, Settings, VehicleType
 import pandas as pd
 from datetime import datetime, timedelta
@@ -15,7 +15,7 @@ class OptimizationResult(BaseModel):
     details: Dict[str, Any]
 
 @router.post("/analyze", response_model=OptimizationResult)
-async def analyze_optimization(planning_data: List[Dict[str, Any]], window_minutes: int | None = None, settings: Settings = Depends(get_settings)):
+async def analyze_optimization(planning_data: List[Dict[str, Any]], settings: Settings = Depends(get_settings), window_minutes: Optional[int] = None):
     if not planning_data:
         raise HTTPException(status_code=400, detail="Planning data is required")
 
