@@ -46,7 +46,7 @@ import { NotificationService } from './services/notification.service';
           <div class="logo-icon">
             <mat-icon>local_shipping</mat-icon>
           </div>
-          <h1>OptiNav <small style="font-size: 10px; opacity: 0.5;">v1.1</small></h1>
+          <h1>OptiNav</h1>
         </div>
 
         <nav class="nav-menu">
@@ -98,9 +98,6 @@ import { NotificationService } from './services/notification.service';
 
       <!-- Main Content -->
       <main class="main-content">
-        <div style="background: #fbbf24; color: #000; padding: 8px; text-align: center; font-weight: bold; font-size: 14px;">
-           🚀 VERSION MISE À JOUR : FIX COLONNES & IMPORTATION ROBUSTE ACTIF
-        </div>
         <header class="top-bar">
           <h2>{{ getViewTitle() }}</h2>
           <div class="actions">
