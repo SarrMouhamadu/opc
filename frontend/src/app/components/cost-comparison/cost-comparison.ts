@@ -146,6 +146,7 @@ import { PlanningService } from '../../services/planning.service';
       justify-content: space-between;
       align-items: center;
       margin-bottom: 32px;
+      gap: 16px;
     }
     .header-content h2 { font-size: 24px; margin-bottom: 4px; color: var(--text-main); }
     .header-content p { color: var(--text-secondary); margin: 0; font-size: 14px; }
@@ -164,9 +165,7 @@ import { PlanningService } from '../../services/planning.service';
       background: #f3f4f6;
       border-radius: 50%;
       margin: 0 auto 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
     }
     .empty-icon mat-icon { font-size: 32px; width: 32px; height: 32px; color: #9ca3af; }
 
@@ -198,7 +197,6 @@ import { PlanningService } from '../../services/planning.service';
     .stat-card.highlight .stat-value, 
     .stat-card.highlight .stat-desc,
     .stat-card.highlight strong { color: white; }
-    .stat-card.highlight .savings-icon { color: rgba(255,255,255,0.8); }
 
     .stat-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
     .stat-label { font-size: 13px; font-weight: 600; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.5px; }
@@ -234,9 +232,7 @@ import { PlanningService } from '../../services/planning.service';
     }
     .section-header h3 { font-size: 16px; margin: 0; color: var(--text-main); }
     
-    .details-content { padding: 0; }
     .grid-2-col { display: grid; grid-template-columns: 1fr 1fr; }
-    
     .detail-column { padding: 24px; }
     .detail-column:first-child { border-right: 1px solid var(--border-color); }
 
@@ -247,7 +243,6 @@ import { PlanningService } from '../../services/planning.service';
     .badge.opt1 { background: #eef2ff; color: #4f46e5; }
     .badge.opt2 { background: #fdf2f8; color: #ec4899; }
 
-    .list-container { display: flex; flex-direction: column; gap: 0; }
     .list-item {
       display: flex;
       justify-content: space-between;
@@ -255,15 +250,20 @@ import { PlanningService } from '../../services/planning.service';
       padding: 12px 0;
       border-bottom: 1px solid #f3f4f6;
     }
-    .list-item:last-child { border-bottom: none; }
-    
-    .item-main { display: flex; flex-direction: column; }
     .item-date { font-weight: 500; font-size: 14px; }
     .item-meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
-    
     .item-end { display: flex; align-items: center; gap: 12px; }
     .zone-badge { font-size: 11px; background: #f3f4f6; padding: 2px 6px; border-radius: 4px; color: var(--text-secondary); }
     .item-price { font-weight: 600; color: var(--text-main); }
+
+    @media (max-width: 768px) {
+      .page-container { padding: 20px; }
+      .page-header { flex-direction: column; align-items: flex-start; }
+      .page-header button { width: 100%; }
+      .stat-value { font-size: 24px; }
+      .grid-2-col { grid-template-columns: 1fr; }
+      .detail-column:first-child { border-right: none; border-bottom: 1px solid var(--border-color); }
+    }
   `
 })
 export class CostComparisonComponent {

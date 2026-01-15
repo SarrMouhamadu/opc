@@ -142,7 +142,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
   `,
   styles: `
     .page-container { padding: 32px 40px; max-width: 1200px; margin: 0 auto; }
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; gap: 16px; }
     .header-content h2 { font-size: 24px; margin-bottom: 4px; color: var(--text-main); }
     .section-title { font-size: 18px; font-weight: 600; margin: 24px 0 16px; color: #374151; }
 
@@ -173,6 +173,16 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
     .divider { height: 1px; background: #f3f4f6; margin: 16px 0; }
     
     .highlight .value { font-size: 16px; color: #2563eb; }
+
+    @media (max-width: 768px) {
+      .page-container { padding: 20px; }
+      .page-header { flex-direction: column; align-items: flex-start; }
+      .page-header .actions { width: 100%; display: flex; gap: 8px; }
+      .page-header .actions button { flex: 1; padding: 0 8px !important; font-size: 13px; }
+      .kpi-grid { grid-template-columns: 1fr; }
+      .card-header { padding: 16px; flex-direction: column; align-items: flex-start; gap: 8px; }
+      .total-price { font-size: 18px; }
+    }
   `
 })
 export class DashboardHomeComponent {

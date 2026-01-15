@@ -131,7 +131,7 @@ import { NotificationService } from '../../services/notification.service';
   `,
   styles: `
     .page-container { padding: 32px 40px; max-width: 1200px; margin: 0 auto; }
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; gap: 16px; }
     .header-content h2 { font-size: 24px; margin-bottom: 4px; color: var(--text-main); }
     .header-content p { color: var(--text-secondary); margin: 0; font-size: 14px; }
 
@@ -187,6 +187,19 @@ import { NotificationService } from '../../services/notification.service';
     
     .group-details { font-size: 12px; color: var(--text-secondary); display: flex; justify-content: flex-end; }
     .cost { font-weight: 600; color: var(--primary-color); }
+
+    @media (max-width: 768px) {
+      .page-container { padding: 20px; }
+      .page-header { flex-direction: column; align-items: flex-start; }
+      .page-header button { width: 100%; }
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .timeline-container { padding: 16px; }
+      .timeline-list::before { left: 19px; }
+      .time-marker { min-width: 40px; }
+      .timeline-item { gap: 12px; }
+      .occupancy-track { width: 40px; }
+      .card-header { padding: 16px; flex-direction: column; align-items: flex-start; gap: 12px; }
+    }
   `
 })
 export class OptimizationDashboardComponent {

@@ -120,6 +120,7 @@ import { NotificationService } from '../../services/notification.service';
       flex-direction: column;
       align-items: center;
       gap: 16px;
+      padding: 20px;
     }
     .icon-circle {
       width: 64px;
@@ -179,7 +180,7 @@ import { NotificationService } from '../../services/notification.service';
       max-height: 500px;
       overflow: auto;
     }
-    table { width: 100%; border-collapse: collapse; }
+    table { width: 100%; border-collapse: collapse; min-width: 600px; }
     
     th.mat-mdc-header-cell {
       background: #f9fafb;
@@ -199,6 +200,13 @@ import { NotificationService } from '../../services/notification.service';
     }
     tr.mat-mdc-row:hover {
       background: #f9fafb;
+    }
+
+    @media (max-width: 768px) {
+      .page-container { padding: 20px; }
+      .upload-zone { height: 220px; }
+      .card-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .badge { align-self: flex-start; }
     }
   `,
 })

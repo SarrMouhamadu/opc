@@ -84,19 +84,19 @@ import { HistoryService, HistoryEntry } from '../../services/history.service';
     .header-content h2 { font-size: 24px; margin-bottom: 4px; color: var(--text-main); }
     .header-content p { color: var(--text-secondary); margin: 0; font-size: 14px; }
 
-    .chart-card { padding: 24px; margin-bottom: 32px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .chart-card { padding: 24px; margin-bottom: 32px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); background: var(--surface); }
     .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
-    .card-header h3 { margin: 0; font-size: 16px; font-weight: 600; }
+    .card-header h3 { margin: 0; font-size: 16px; font-weight: 600; color: var(--text-main); }
     .text-primary { color: var(--primary-color); }
 
-    .chart-area { height: 200px; display: flex; align-items: flex-end; justify-content: space-around; padding-bottom: 20px; border-bottom: 1px solid #e5e7eb; }
-    .bar-chart { display: flex; align-items: flex-end; gap: 16px; height: 100%; width: 100%; }
-    .bar-group { display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; }
-    .bar { width: 40px; background: #818cf8; border-radius: 4px 4px 0 0; min-height: 4px; transition: height 0.5s ease; }
-    .label { margin-top: 8px; font-size: 12px; color: var(--text-secondary); }
+    .chart-area { height: 200px; display: flex; align-items: flex-end; justify-content: space-around; padding-bottom: 20px; border-bottom: 1px solid var(--border-color); }
+    .bar-chart { display: flex; align-items: flex-end; gap: 16px; height: 100%; width: 100%; overflow-x: auto; padding-bottom: 8px; }
+    .bar-group { display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 40px; height: 100%; justify-content: flex-end; }
+    .bar { width: 30px; background: #818cf8; border-radius: 4px 4px 0 0; min-height: 4px; transition: height 0.5s ease; }
+    .label { margin-top: 8px; font-size: 10px; color: var(--text-secondary); white-space: nowrap; }
 
-    .table-container { border-radius: 12px; overflow: hidden; background: white; border: 1px solid var(--border-color); }
-    table { width: 100%; }
+    .table-container { border-radius: 12px; overflow-x: auto; background: var(--surface); border: 1px solid var(--border-color); }
+    table { width: 100%; min-width: 600px; background: var(--surface); color: var(--text-main); }
     
     .text-success { color: #16a34a; font-weight: 600; }
     .font-bold { font-weight: 700; }
@@ -104,6 +104,13 @@ import { HistoryService, HistoryEntry } from '../../services/history.service';
     .empty-state { text-align: center; padding: 64px 0; color: var(--text-secondary); background: var(--surface); border-radius: 12px; border: 1px dashed var(--border-color); }
     .empty-icon { width: 64px; height: 64px; background: #f3f4f6; border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; }
     .empty-icon mat-icon { font-size: 32px; width: 32px; height: 32px; color: #9ca3af; }
+
+    @media (max-width: 768px) {
+      .page-container { padding: 20px; }
+      .header-content h2 { font-size: 20px; }
+      .bar { width: 20px; }
+      .bar-chart { gap: 8px; }
+    }
   `
 })
 export class HistoryViewComponent implements OnInit {

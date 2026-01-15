@@ -39,38 +39,44 @@ import { NotificationService } from './services/notification.service';
     <app-login *ngIf="!authService.isAuthenticated()"></app-login>
 
     <!-- Main App Layout (Protected) -->
-    <div class="app-layout" *ngIf="authService.isAuthenticated()">
+    <div class="app-layout" [class.sidebar-open]="isSidebarOpen()" *ngIf="authService.isAuthenticated()">
+      <!-- Sidebar Overlay (Mobile) -->
+      <div class="sidebar-overlay" *ngIf="isSidebarOpen()" (click)="isSidebarOpen.set(false)"></div>
+
       <!-- Sidebar -->
-      <aside class="sidebar">
+      <aside class="sidebar" [class.mobile-active]="isSidebarOpen()">
         <div class="logo-section">
           <div class="logo-icon">
             <mat-icon>local_shipping</mat-icon>
           </div>
           <h1>OptiNav</h1>
+          <button class="icon-btn mobile-only close-sidebar" (click)="isSidebarOpen.set(false)">
+            <mat-icon>close</mat-icon>
+          </button>
         </div>
 
         <nav class="nav-menu">
-          <a class="nav-item" [class.active]="currentView() === 'dashboard'" (click)="currentView.set('dashboard')">
+          <a class="nav-item" [class.active]="currentView() === 'dashboard'" (click)="navigateTo('dashboard')">
             <mat-icon>dashboard</mat-icon>
             <span>Tableau de Bord</span>
           </a>
-          <a class="nav-item" [class.active]="currentView() === 'planning'" (click)="currentView.set('planning')">
+          <a class="nav-item" [class.active]="currentView() === 'planning'" (click)="navigateTo('planning')">
             <mat-icon>calendar_today</mat-icon>
             <span>Planning</span>
           </a>
-          <a class="nav-item" [class.active]="currentView() === 'comparison'" (click)="currentView.set('comparison')">
+          <a class="nav-item" [class.active]="currentView() === 'comparison'" (click)="navigateTo('comparison')">
             <mat-icon>analytics</mat-icon>
             <span>Comparaison</span>
           </a>
-          <a class="nav-item" [class.active]="currentView() === 'optimization'" (click)="currentView.set('optimization')">
+          <a class="nav-item" [class.active]="currentView() === 'optimization'" (click)="navigateTo('optimization')">
             <mat-icon>auto_graph</mat-icon>
             <span>Optimisation</span>
           </a>
-          <a class="nav-item" [class.active]="currentView() === 'settings'" (click)="currentView.set('settings')">
+          <a class="nav-item" [class.active]="currentView() === 'settings'" (click)="navigateTo('settings')">
             <mat-icon>tune</mat-icon>
             <span>Paramètres</span>
           </a>
-          <a class="nav-item" [class.active]="currentView() === 'history'" (click)="currentView.set('history')">
+          <a class="nav-item" [class.active]="currentView() === 'history'" (click)="navigateTo('history')">
              <mat-icon>history</mat-icon>
              <span>Historique</span>
           </a>
@@ -99,7 +105,12 @@ import { NotificationService } from './services/notification.service';
       <!-- Main Content -->
       <main class="main-content">
         <header class="top-bar">
-          <h2>{{ getViewTitle() }}</h2>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <button class="icon-btn mobile-only" (click)="isSidebarOpen.set(true)">
+              <mat-icon>menu</mat-icon>
+            </button>
+            <h2 class="view-title">{{ getViewTitle() }}</h2>
+          </div>
           <div class="actions">
             <!-- Theme Toggle (Quick Access) -->
             <button class="icon-btn" (click)="themeService.toggleTheme()" [title]="themeService.isDarkMode() ? 'Passer en mode clair' : 'Passer en mode sombre'">
@@ -129,7 +140,7 @@ import { NotificationService } from './services/notification.service';
               </button>
             </mat-menu>
 
-            <button class="icon-btn"><mat-icon>help_outline</mat-icon></button>
+            <button class="icon-btn desktop-only"><mat-icon>help_outline</mat-icon></button>
           </div>
         </header>
 
@@ -298,21 +309,62 @@ import { NotificationService } from './services/notification.service';
       padding: 0; 
     }
 
-    .notification-header {
-      padding: 8px 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border-color);
-      font-weight: 600;
-    }
     .unread {
       background-color: rgba(79, 70, 229, 0.05);
+    }
+
+    /* Mobile Utilities */
+    .mobile-only { display: none; }
+    .desktop-only { display: block; }
+
+    @media (max-width: 768px) {
+      .mobile-only { display: block; }
+      .desktop-only { display: none; }
+
+      .sidebar {
+        position: fixed;
+        left: -100%;
+        top: 0;
+        bottom: 0;
+        z-index: 1000;
+        transition: left 0.3s ease;
+        box-shadow: 20px 0 50px rgba(0,0,0,0.1);
+      }
+      .sidebar.mobile-active {
+        left: 0;
+      }
+      .sidebar-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.4);
+        z-index: 999;
+        backdrop-filter: blur(4px);
+      }
+
+      .top-bar {
+        padding: 0 16px;
+        height: 64px;
+      }
+      .top-bar h2 {
+        font-size: 18px;
+      }
+      
+      .main-content {
+        padding-top: 0;
+      }
+
+      .close-sidebar {
+        margin-left: auto;
+      }
     }
   `,
 })
 export class App {
   currentView = signal<'dashboard' | 'planning' | 'comparison' | 'optimization' | 'settings' | 'history'>('dashboard');
+  isSidebarOpen = signal<boolean>(false);
 
   constructor(
     public authService: AuthService,
@@ -325,11 +377,16 @@ export class App {
       case 'dashboard': return "Vue d'Ensemble";
       case 'planning': return "Gestion du Planning";
       case 'comparison': return "Analyse & Coûts";
-      case 'optimization': return "Optimisation & Simulation";
+      case 'optimization': return "Optimisation";
       case 'settings': return "Configuration";
-      case 'history': return "Historique & Suivi";
+      case 'history': return "Historique";
       default: return "OptiNav";
     }
+  }
+
+  navigateTo(view: any) {
+    this.currentView.set(view);
+    this.isSidebarOpen.set(false);
   }
 
   logout() {
