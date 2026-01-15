@@ -46,7 +46,7 @@ import { NotificationService } from './services/notification.service';
           <div class="logo-icon">
             <mat-icon>local_shipping</mat-icon>
           </div>
-          <h1>OptiNav</h1>
+          <h1>OptiNav <small style="font-size: 10px; opacity: 0.5;">v1.1</small></h1>
         </div>
 
         <nav class="nav-menu">
