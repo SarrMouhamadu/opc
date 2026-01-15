@@ -25,7 +25,7 @@ export interface CostBreakdown {
   providedIn: 'root'
 })
 export class DashboardService {
-  private apiUrl = 'http://localhost:8000'; // Pointing to main API for flexibility
+  private apiUrl = '/api'; // Pointing to main API for flexibility
 
   constructor(private http: HttpClient) {}
 

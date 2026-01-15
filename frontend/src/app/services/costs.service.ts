@@ -15,7 +15,7 @@ export interface CostBreakdown {
   providedIn: 'root'
 })
 export class CostsService {
-  private apiUrl = 'http://localhost:8000/costs';
+  private apiUrl = '/api/costs';
 
   constructor(private http: HttpClient) {}
 

@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 
 // Update with your actual API URL
-const API_URL = 'http://localhost:8000';
+const API_URL = '/api';
 
 @Injectable({
   providedIn: 'root',

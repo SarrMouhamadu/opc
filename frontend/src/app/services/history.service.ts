@@ -24,7 +24,7 @@ export interface ArchiveRequest {
   providedIn: 'root'
 })
 export class HistoryService {
-  private apiUrl = 'http://localhost:8000/history';
+  private apiUrl = '/api/history';
 
   constructor(private http: HttpClient) {}
 
