@@ -98,6 +98,9 @@ import { NotificationService } from './services/notification.service';
 
       <!-- Main Content -->
       <main class="main-content">
+        <div style="background: #fbbf24; color: #000; padding: 8px; text-align: center; font-weight: bold; font-size: 14px;">
+           🚀 VERSION MISE À JOUR : FIX COLONNES & IMPORTATION ROBUSTE ACTIF
+        </div>
         <header class="top-bar">
           <h2>{{ getViewTitle() }}</h2>
           <div class="actions">
