@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { PlanningService } from '../../services/planning.service';
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-upload-planning',
@@ -211,9 +212,11 @@ export class UploadPlanning {
   totalRows = 0;
   isDragging = false;
 
+
   constructor(
     private planningService: PlanningService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private notificationService: NotificationService
   ) {}
 
   onFileSelected(event: any) {
@@ -259,12 +262,28 @@ export class UploadPlanning {
         this.previewData = res.preview;
         this.totalRows = res.row_count;
         this.uploading = false;
+        
+        // App Notification
+        this.notificationService.add({
+          title: 'Import Réussi',
+          message: `${this.totalRows} lignes importées depuis ${this.selectedFile?.name}`,
+          type: 'success'
+        });
+
         this.snackBar.open('Fichier importé avec succès', 'Fermer', { duration: 3000 });
         this.uploadSuccess.emit();
       },
       error: (err) => {
         this.uploading = false;
         const message = err.error?.detail || "Erreur lors de l'importation";
+        
+        // App Notification
+        this.notificationService.add({
+          title: 'Échec de l\'import',
+          message: message,
+          type: 'error'
+        });
+
         this.snackBar.open(message, 'Fermer', { duration: 5000, panelClass: ['error-snackbar'] });
       }
     });

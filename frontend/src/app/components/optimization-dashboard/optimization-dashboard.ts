@@ -10,6 +10,7 @@ import { MatSliderModule } from '@angular/material/slider';
 import { MatDividerModule } from '@angular/material/divider';
 import { OptimizationService, OptimizationResult } from '../../services/optimization.service';
 import { PlanningService } from '../../services/planning.service';
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-optimization-dashboard',
@@ -138,11 +139,11 @@ import { PlanningService } from '../../services/planning.service';
       text-align: center; padding: 64px 0; color: var(--text-secondary);
       background: var(--surface); border-radius: var(--radius-lg); border: 1px dashed var(--border-color);
     }
-    .empty-icon { width: 64px; height: 64px; background: #f3f4f6; border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; }
-    .empty-icon mat-icon { font-size: 32px; width: 32px; height: 32px; color: #9ca3af; }
+    .empty-icon { width: 64px; height: 64px; background: var(--bg-app); border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; }
+    .empty-icon mat-icon { font-size: 32px; width: 32px; height: 32px; color: var(--text-secondary); }
 
     .simulation-card {
-      background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-lg); padding: 24px; margin-bottom: 32px;
+      background: var(--surface); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 32px;
       display: flex; flex-direction: column; gap: 16px;
     }
     .sim-header { display: flex; align-items: center; gap: 12px; color: var(--primary-color); }
@@ -161,19 +162,19 @@ import { PlanningService } from '../../services/planning.service';
     .kpi-label { font-size: 13px; color: var(--text-secondary); font-weight: 500; text-transform: uppercase; }
 
     .timeline-card { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border-color); overflow: hidden; }
-    .card-header { padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: #fcfcfc; }
+    .card-header { padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--surface); }
     .card-header h3 { font-size: 16px; margin: 0; color: var(--text-main); }
     .badge { background: #e0e7ff; color: #4338ca; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; }
     
-    .timeline-container { height: 400px; overflow-y: auto; padding: 24px; background: #f9fafb; }
+    .timeline-container { height: 400px; overflow-y: auto; padding: 24px; background: var(--bg-app); }
     .timeline-list { display: flex; flex-direction: column; gap: 16px; position: relative; }
-    .timeline-list::before { content: ''; position: absolute; left: 29px; top: 0; bottom: 0; width: 2px; background: #e5e7eb; }
+    .timeline-list::before { content: ''; position: absolute; left: 29px; top: 0; bottom: 0; width: 2px; background: var(--border-color); }
     
     .timeline-item { display: flex; gap: 24px; position: relative; }
     .time-marker { display: flex; flex-direction: column; align-items: center; min-width: 60px; }
-    .time { font-size: 12px; font-weight: 600; color: var(--text-secondary); background: #f9fafb; padding-bottom: 8px; z-index: 1; }
+    .time { font-size: 12px; font-weight: 600; color: var(--text-secondary); background: var(--bg-app); padding-bottom: 8px; z-index: 1; }
     
-    .group-content { flex: 1; background: white; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .group-content { flex: 1; background: var(--surface); padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); }
     .group-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .vehicle-type { font-weight: 600; font-size: 14px; color: var(--text-main); }
     
@@ -194,9 +195,11 @@ export class OptimizationDashboardComponent {
   windowMinutes = 20; // Default simulation value
   hasData = computed(() => this.planningService.currentPlanning().length > 0);
 
+
   constructor(
     private optimizationService: OptimizationService,
-    private planningService: PlanningService
+    private planningService: PlanningService,
+    private notificationService: NotificationService
   ) {}
 
   analyze() {
@@ -208,9 +211,19 @@ export class OptimizationDashboardComponent {
       next: (res) => {
         this.results = res;
         this.loading = false;
+        this.notificationService.add({
+          title: 'Optimisation Terminée',
+          message: `Simulation effectuée avec une fenêtre de ${this.windowMinutes} min.`,
+          type: 'success'
+        });
       },
       error: () => {
         this.loading = false;
+        this.notificationService.add({
+          title: 'Erreur',
+          message: 'Impossible de lancer la simulation.',
+          type: 'error'
+        });
       }
     });
   }

@@ -14,7 +14,7 @@ export interface OptimizationResult {
   providedIn: 'root'
 })
 export class OptimizationService {
-  private apiUrl = 'http://51.255.60.133:8000/optimization';
+  private apiUrl = 'http://localhost:8000/optimization';
 
   constructor(private http: HttpClient) {}
 

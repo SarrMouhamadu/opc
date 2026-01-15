@@ -79,9 +79,4 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     access_token = create_access_token(
         data={"sub": user['username']}, expires_delta=access_token_expires
     )
-    
-    # Log login
-    from app.core.logger import log_event
-    log_event("LOGIN", f"Connexion utilisateur: {user['username']}", user=user['username'])
-    
     return {"access_token": access_token, "token_type": "bearer"}

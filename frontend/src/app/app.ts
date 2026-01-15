@@ -1,21 +1,20 @@
-import { Component, signal, TemplateRef, ViewChild, OnInit } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatBadgeModule } from '@angular/material/badge';
-
+import { MatBadgeModule } from '@angular/material/badge'; // Added
 import { UploadPlanning } from './components/upload-planning/upload-planning';
 import { SettingsComponent } from './components/settings/settings';
-
+import { CostComparisonComponent } from './components/cost-comparison/cost-comparison';
 import { OptimizationDashboardComponent } from './components/optimization-dashboard/optimization-dashboard';
 import { DashboardHomeComponent } from './components/dashboard-home/dashboard-home';
 import { HistoryViewComponent } from './components/history-view/history-view';
 import { LoginComponent } from './components/login/login';
 import { AuthService } from './services/auth.service';
-import { LogsService, LogEntry } from './services/logs.service';
+import { ThemeService } from './services/theme.service';
+import { NotificationService } from './services/notification.service';
 
 @Component({
   selector: 'app-root',
@@ -26,10 +25,10 @@ import { LogsService, LogEntry } from './services/logs.service';
     MatIconModule, 
     MatButtonModule,
     MatMenuModule,
-    MatDialogModule,
     MatBadgeModule,
     UploadPlanning, 
     SettingsComponent, 
+    CostComparisonComponent, 
     OptimizationDashboardComponent, 
     DashboardHomeComponent, 
     HistoryViewComponent,
@@ -40,7 +39,7 @@ import { LogsService, LogEntry } from './services/logs.service';
     <app-login *ngIf="!authService.isAuthenticated()"></app-login>
 
     <!-- Main App Layout (Protected) -->
-    <div class="app-layout" *ngIf="authService.isAuthenticated()" [class.dark-theme]="darkMode()">
+    <div class="app-layout" *ngIf="authService.isAuthenticated()">
       <!-- Sidebar -->
       <aside class="sidebar">
         <div class="logo-section">
@@ -59,7 +58,10 @@ import { LogsService, LogEntry } from './services/logs.service';
             <mat-icon>calendar_today</mat-icon>
             <span>Planning</span>
           </a>
-
+          <a class="nav-item" [class.active]="currentView() === 'comparison'" (click)="currentView.set('comparison')">
+            <mat-icon>analytics</mat-icon>
+            <span>Comparaison</span>
+          </a>
           <a class="nav-item" [class.active]="currentView() === 'optimization'" (click)="currentView.set('optimization')">
             <mat-icon>auto_graph</mat-icon>
             <span>Optimisation</span>
@@ -73,13 +75,6 @@ import { LogsService, LogEntry } from './services/logs.service';
              <span>Historique</span>
           </a>
         </nav>
-        
-        <div class="theme-toggle">
-            <button class="toggle-btn" (click)="toggleTheme()">
-                <mat-icon>{{ darkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
-                <span>{{ darkMode() ? 'Mode Clair' : 'Mode Sombre' }}</span>
-            </button>
-        </div>
 
         <div class="user-profile" [matMenuTriggerFor]="userMenu" style="cursor: pointer;">
           <div class="avatar">MS</div>
@@ -90,6 +85,10 @@ import { LogsService, LogEntry } from './services/logs.service';
           <mat-icon style="margin-left: auto; font-size: 20px; color: var(--text-secondary);">expand_more</mat-icon>
         </div>
         <mat-menu #userMenu="matMenu">
+          <button mat-menu-item (click)="themeService.toggleTheme()">
+            <mat-icon>{{ themeService.isDarkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+            <span>Mode {{ themeService.isDarkMode() ? 'Clair' : 'Sombre' }}</span>
+          </button>
           <button mat-menu-item (click)="logout()">
             <mat-icon>logout</mat-icon>
             <span>Déconnexion</span>
@@ -102,31 +101,42 @@ import { LogsService, LogEntry } from './services/logs.service';
         <header class="top-bar">
           <h2>{{ getViewTitle() }}</h2>
           <div class="actions">
-            <button class="icon-btn" [matMenuTriggerFor]="notificationsMenu" (click)="loadNotifications()">
-              <mat-icon [matBadge]="recentLogs.length" matBadgeSize="small" matBadgeColor="warn" [matBadgeHidden]="recentLogs.length === 0">notifications</mat-icon>
+            <!-- Theme Toggle (Quick Access) -->
+            <button class="icon-btn" (click)="themeService.toggleTheme()" [title]="themeService.isDarkMode() ? 'Passer en mode clair' : 'Passer en mode sombre'">
+                <mat-icon>{{ themeService.isDarkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
             </button>
-            <mat-menu #notificationsMenu="matMenu" class="notification-menu">
-              <div class="menu-header" (click)="$event.stopPropagation()">
-                <h3>Activités Récentes</h3>
+
+            <!-- Notifications -->
+            <button class="icon-btn" [matMenuTriggerFor]="notificationMenu">
+              <mat-icon [matBadge]="notificationService.unreadCount()" [matBadgeHidden]="notificationService.unreadCount() === 0" matBadgeColor="warn" matBadgeSize="small">notifications</mat-icon>
+            </button>
+            <mat-menu #notificationMenu="matMenu" class="notification-menu">
+              <div class="notification-header" (click)="$event.stopPropagation()">
+                <span>Notifications</span>
+                <button mat-button color="primary" style="font-size: 12px;" (click)="notificationService.markAllAsRead()">Tout lire</button>
               </div>
-              <div *ngFor="let log of recentLogs" mat-menu-item class="log-item">
-                <mat-icon class="log-icon">info</mat-icon>
-                <div class="log-content">
-                  <div class="log-title">{{ log.action }}</div>
-                  <div class="log-time">{{ log.timestamp | date:'short' }}</div>
+              <div *ngIf="notificationService.notifications().length === 0" style="padding: 16px; text-align: center; color: var(--text-secondary);">
+                Aucune notification
+              </div>
+              <button mat-menu-item *ngFor="let notif of notificationService.notifications()" [class.unread]="!notif.read" (click)="notificationService.markAsRead(notif.id)">
+                <mat-icon [color]="notif.type === 'error' ? 'warn' : 'primary'" style="font-size: 20px;">
+                  {{ notif.type === 'success' ? 'check_circle' : notif.type === 'error' ? 'error' : 'info' }}
+                </mat-icon>
+                <div style="display: flex; flex-direction: column; line-height: 1.2;">
+                  <span style="font-weight: 500;">{{ notif.title }}</span>
+                  <span style="font-size: 12px; opacity: 0.8;">{{ notif.message }}</span>
                 </div>
-              </div>
-              <div mat-menu-item *ngIf="recentLogs.length === 0" disabled>Aucune notification</div>
-              <button mat-menu-item (click)="currentView.set('history')">Voir tout l'historique</button>
+              </button>
             </mat-menu>
 
-            <button class="icon-btn" (click)="openHelp(helpDialog)"><mat-icon>help_outline</mat-icon></button>
+            <button class="icon-btn"><mat-icon>help_outline</mat-icon></button>
           </div>
         </header>
 
         <div class="content-scroll">
           <app-dashboard-home *ngIf="currentView() === 'dashboard'" (goToUpload)="currentView.set('planning')" />
           <app-upload-planning *ngIf="currentView() === 'planning'" (uploadSuccess)="currentView.set('optimization')" />
+          <app-cost-comparison *ngIf="currentView() === 'comparison'" />
           <app-optimization-dashboard *ngIf="currentView() === 'optimization'" />
           <app-settings *ngIf="currentView() === 'settings'" />
           <app-history-view *ngIf="currentView() === 'history'" />
@@ -134,28 +144,6 @@ import { LogsService, LogEntry } from './services/logs.service';
         </div>
       </main>
     </div>
-
-    <!-- Help Dialog Template -->
-    <ng-template #helpDialog>
-      <h2 mat-dialog-title>Aide & Support</h2>
-      <mat-dialog-content>
-        <p>Bienvenue sur <strong>OptiNav</strong>, votre plateforme d'optimisation de transport.</p>
-        
-        <h3>Guide Rapide</h3>
-        <ul>
-          <li><strong>Planning</strong> : Importez vos fichiers Excel/CSV.</li>
-          <li><strong>Optimisation</strong> : Lancez des simulations de regroupement.</li>
-          <li><strong>Historique</strong> : Consultez vos rapports précédents.</li>
-        </ul>
-
-        <h3>Support Technique</h3>
-        <p>Pour toute assistance technique, veuillez contacter l'équipe IT :</p>
-        <p>📧 support@optinav.com<br>📞 +221 77 000 00 00</p>
-      </mat-dialog-content>
-      <mat-dialog-actions align="end">
-        <button mat-button mat-dialog-close>Fermer</button>
-      </mat-dialog-actions>
-    </ng-template>
   `,
   styles: `
     .app-layout {
@@ -163,7 +151,7 @@ import { LogsService, LogEntry } from './services/logs.service';
       height: 100vh;
       background: var(--bg-app);
       overflow: hidden;
-      color: var(--text-main); /* Ensure text inherits correctly */
+      color: var(--text-main); /* Ensure text color applies */
     }
 
     /* Sidebar */
@@ -175,7 +163,6 @@ import { LogsService, LogEntry } from './services/logs.service';
       flex-direction: column;
       padding: 0;
       flex-shrink: 0;
-      transition: background-color 0.3s;
     }
 
     .logo-section {
@@ -227,37 +214,13 @@ import { LogsService, LogEntry } from './services/logs.service';
       height: 20px;
     }
     .nav-item:hover {
-      background: var(--hover-bg);
+      background: var(--bg-app);
       color: var(--text-main);
-      transform: translateX(4px); /* Subtle hover movement */
     }
     .nav-item.active {
-      background: #eff6ff; /* Light indigo tint - Consider variable for dark mode support? */
+      background: rgba(79, 70, 229, 0.1); /* Transparent primary */
       color: var(--primary-color);
     }
-    /* Dark mode active state fix */
-    .dark-theme .nav-item.active {
-       background: rgba(79, 70, 229, 0.2); 
-    }
-    
-    .theme-toggle {
-        padding: 0 12px 12px;
-    }
-    .toggle-btn {
-        display: flex;
-        align-items: center;
-        width: 100%;
-        padding: 12px 16px;
-        background: transparent;
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-md);
-        color: var(--text-main);
-        cursor: pointer;
-        font-size: 13px;
-        transition: all 0.2s;
-    }
-    .toggle-btn mat-icon { font-size: 18px; margin-right: 8px; width: 18px; height: 18px; }
-    .toggle-btn:hover { background: var(--hover-bg); }
 
     .user-profile {
       padding: 24px;
@@ -298,8 +261,6 @@ import { LogsService, LogEntry } from './services/logs.service';
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      background: var(--bg-app);
-      transition: background-color 0.3s;
     }
 
     .top-bar {
@@ -309,11 +270,15 @@ import { LogsService, LogEntry } from './services/logs.service';
       justify-content: space-between;
       padding: 0 40px;
       border-bottom: 1px solid var(--border-color); /* Optional: separate header */
-      background: var(--surface); /* Make surface to distinguish from content */
+      background: var(--bg-app); /* Transparent or solid */
     }
     .top-bar h2 {
       font-size: 24px;
       color: var(--text-main);
+    }
+    .actions {
+      display: flex;
+      gap: 8px;
     }
     .icon-btn {
       background: none;
@@ -322,74 +287,44 @@ import { LogsService, LogEntry } from './services/logs.service';
       cursor: pointer;
       padding: 8px;
       border-radius: 50%;
-      transition: background 0.2s;
     }
-    .icon-btn:hover { background: var(--hover-bg); color: var(--text-main); }
-    
-    .menu-header {
-      padding: 8px 16px;
-      border-bottom: 1px solid var(--border-color);
-      margin-bottom: 4px;
+    .icon-btn:hover {
+      background-color: rgba(0,0,0,0.05); /* Quick hover effect */
     }
-    .menu-header h3 { margin: 0; font-size: 14px; color: var(--text-main); }
-    
-    .log-item {
-        display: flex;
-        gap: 12px;
-        align-items: center;
-        height: auto;
-        padding-top: 8px;
-        padding-bottom: 8px;
-    }
-    .log-content { display: flex; flex-direction: column; line-height: 1.2; }
-    .log-title { font-weight: 500; font-size: 13px; color: var(--text-main); }
-    .log-time { font-size: 11px; color: var(--text-secondary); }
-    .log-icon { font-size: 18px; width: 18px; height: 18px; color: var(--primary-color); margin-right: 0 !important; }
 
     .content-scroll {
       flex: 1;
       overflow-y: auto;
       padding: 0; 
     }
+
+    .notification-header {
+      padding: 8px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      font-weight: 600;
+    }
+    .unread {
+      background-color: rgba(79, 70, 229, 0.05);
+    }
   `,
 })
-export class App implements OnInit {
+export class App {
   currentView = signal<'dashboard' | 'planning' | 'comparison' | 'optimization' | 'settings' | 'history'>('dashboard');
-  recentLogs: LogEntry[] = [];
-  darkMode = signal(false);
 
   constructor(
     public authService: AuthService,
-    private logsService: LogsService,
-    private dialog: MatDialog
+    public themeService: ThemeService,
+    public notificationService: NotificationService
   ) {}
-
-  ngOnInit() {
-    this.loadNotifications();
-  }
-
-  toggleTheme() {
-    this.darkMode.set(!this.darkMode());
-  }
-
-  loadNotifications() {
-     if (this.authService.isAuthenticated()) {
-        this.logsService.getLogs().subscribe(logs => {
-          // Take last 5
-          this.recentLogs = logs.slice(0, 5); 
-        });
-     }
-  }
-
-  openHelp(template: TemplateRef<any>) {
-    this.dialog.open(template, { width: '400px' });
-  }
 
   getViewTitle() {
     switch (this.currentView()) {
       case 'dashboard': return "Vue d'Ensemble";
       case 'planning': return "Gestion du Planning";
-
+      case 'comparison': return "Analyse & Coûts";
       case 'optimization': return "Optimisation & Simulation";
       case 'settings': return "Configuration";
       case 'history': return "Historique & Suivi";

@@ -10,7 +10,6 @@ export interface VehicleType {
 
 export interface Settings {
   grouping_window_minutes: number;
-  option_2_bus_price?: number;
   vehicle_types: VehicleType[];
 }
 
@@ -18,7 +17,7 @@ export interface Settings {
   providedIn: 'root'
 })
 export class SettingsService {
-  private apiUrl = 'http://51.255.60.133:8000/settings';
+  private apiUrl = 'http://localhost:8000/settings';
 
   constructor(private http: HttpClient) {}
 

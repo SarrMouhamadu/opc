@@ -62,11 +62,6 @@ def archive_report(request: ArchiveRequest):
     
     history.append(new_entry)
     save_history(history)
-    
-    # Log archive
-    from app.core.logger import log_event
-    log_event("ARCHIVE", f"Rapport archivé: {new_entry['id']}")
-    
     return {"message": "Report archived successfully", "id": new_entry["id"]}
 
 @router.get("/stats")

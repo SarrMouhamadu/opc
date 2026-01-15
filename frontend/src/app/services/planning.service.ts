@@ -6,7 +6,7 @@ import { Observable, tap } from 'rxjs';
   providedIn: 'root'
 })
 export class PlanningService {
-  private apiUrl = 'http://51.255.60.133:8000/planning';
+  private apiUrl = 'http://localhost:8000/planning';
   
   // Shared state for the uploaded planning
   currentPlanning = signal<any[]>([]);
@@ -18,7 +18,7 @@ export class PlanningService {
     formData.append('file', file);
     return this.http.post(`${this.apiUrl}/upload`, formData).pipe(
       tap((res: any) => {
-        this.currentPlanning.set(res.data); // Use FULL data for calculation
+        this.currentPlanning.set(res.preview); // In a real app, this would be the full data
       })
     );
   }

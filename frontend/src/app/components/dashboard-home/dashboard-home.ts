@@ -1,4 +1,4 @@
-import { Component, computed, signal, Output, EventEmitter, effect, Injector } from '@angular/core';
+import { Component, computed, signal, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -27,7 +27,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
       <header class="page-header">
         <div class="header-content">
           <h2>Tableau de Bord Décisionnel</h2>
-          <p>Conformité stricte : Analyse comparative entre Flotte Dédiée (Option 1) et Lignes de Bus (Option 2).</p>
+          <p>Conformité stricte : Analyse comparative des coûts et de l'efficience.</p>
         </div>
         <div class="actions">
           <button mat-flat-button color="accent" (click)="archive()" [disabled]="!analysis">
@@ -56,9 +56,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
         <button mat-flat-button color="primary" (click)="goToUpload.emit()">Aller au Planning</button>
       </div>
 
-      <mat-progress-bar mode="indeterminate" *ngIf="loading" class="loading-bar"></mat-progress-bar>
-
-      <div class="dashboard-content" *ngIf="analysis && !loading">
+      <div class="dashboard-content" *ngIf="analysis">
         <!-- Main Summary -->
         <div class="summary-section">
             <mat-card class="main-card">
@@ -147,7 +145,6 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
     .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
     .header-content h2 { font-size: 24px; margin-bottom: 4px; color: var(--text-main); }
     .section-title { font-size: 18px; font-weight: 600; margin: 24px 0 16px; color: #374151; }
-    .loading-bar { margin: 24px 0; border-radius: 4px; }
 
     .empty-state { text-align: center; padding: 64px 0; color: var(--text-secondary); background: var(--surface); border-radius: 12px; border: 1px dashed var(--border-color); }
     .empty-icon { width: 64px; height: 64px; background: #f3f4f6; border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; }
@@ -180,7 +177,6 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 })
 export class DashboardHomeComponent {
   analysis: CostBreakdown | null = null;
-  loading = false;
   hasData = computed(() => this.planningService.currentPlanning().length > 0);
   @Output() goToUpload = new EventEmitter<void>();
 
@@ -188,31 +184,16 @@ export class DashboardHomeComponent {
     private dashboardService: DashboardService,
     private planningService: PlanningService,
     private historyService: HistoryService,
-    private snackBar: MatSnackBar,
-    private injector: Injector
+    private snackBar: MatSnackBar
   ) {
-    effect(() => {
-        if (this.hasData()) {
-            this.loadData();
-        }
-    }, { injector: this.injector });
+    if (this.hasData()) {
+      this.loadData();
+    }
   }
 
   loadData() {
-    this.loading = true;
     const data = this.planningService.currentPlanning();
-    this.dashboardService.getKpiAnalysis(data).subscribe({
-        next: (res) => {
-            this.analysis = res;
-            this.loading = false;
-        },
-        error: (err) => {
-            console.error("Error fetching KPI:", err);
-            const msg = err.error?.detail || err.message || "Erreur inconnue lors du calcul";
-            this.snackBar.open(`Erreur KPI: ${msg}`, "Fermer", { duration: 10000 }); // Longer duration to read
-            this.loading = false;
-        }
-    });
+    this.dashboardService.getKpiAnalysis(data).subscribe(res => this.analysis = res);
   }
 
   export(format: 'excel' | 'pdf') {
@@ -229,12 +210,13 @@ export class DashboardHomeComponent {
 
   archive() {
     if (!this.analysis) return;
+    // Archive format update needed? For now just save summary
     const archiveData = {
       total_cost: this.analysis.option_1_total < this.analysis.option_2_total ? this.analysis.option_1_total : this.analysis.option_2_total,
       savings: this.analysis.savings,
       details: this.analysis,
-      total_vehicles: this.analysis.kpi_option_1.total_vehicles,
-      total_employees: 0
+      total_vehicles: this.analysis.kpi_option_1.total_vehicles, // Assuming Opt 1 as baseline metric or take best
+      total_employees: 0 // Not strictly tracked in breakdown, can derive or set 0
     };
     
     this.historyService.archive(archiveData).subscribe({
