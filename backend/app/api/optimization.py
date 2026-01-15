@@ -84,68 +84,46 @@ async def analyze_optimization(planning_data: List[Dict[str, Any]], settings: Se
     hiace = next((v for v in settings.vehicle_types if "hiace" in v.name.lower()), None)
     if hiace: max_capacity = hiace.capacity
     
-    processed_indices = set()
+    # Optimized Grouping Strategy
+    # Instead of O(N^2) search, we use a single pass with index tracking
     
-    # Iterate through employees
-    for i in range(len(df)):
-        if i in processed_indices:
-            continue
-            
+    i = 0
+    while i < len(df):
         current_emp = df.iloc[i]
         start_time = current_emp['datetime']
         
-        # Start a new group
-        current_group = [current_emp.to_dict()]
-        processed_indices.add(i)
+        # Current group start
+        group_indices = [i]
         
-        # Look ahead for candidates
-        for j in range(i + 1, len(df)):
-            if j in processed_indices:
-                continue
-                
+        # Look ahead for candidates in window
+        # J starts from i + 1
+        j = i + 1
+        while j < len(df) and len(group_indices) < max_capacity:
             candidate = df.iloc[j]
             time_diff = (candidate['datetime'] - start_time).total_seconds() / 60.0
             
             if time_diff <= grouping_window:
-                if len(current_group) < max_capacity:
-                    current_group.append(candidate.to_dict())
-                    processed_indices.add(j)
-                else:
-                    # Vehicle full
-                    break
+                group_indices.append(j)
+                j += 1
             else:
-                # Outside window, since sorted, no need to check further for this group
                 break
         
-        # Assign Vehicle Type to Group
+        # Finalize group
+        current_group = df.iloc[group_indices]
         group_count = len(current_group)
-        # Simple logic: if <= 4 use Berline, else Hiace (if available)
-        vehicle_name = "Inconnu"
-        cost = 0
         
-        # Sort vehicle types by capacity
+        # Select Vehicle
         sorted_vehicles = sorted(settings.vehicle_types, key=lambda x: x.capacity)
+        selected_vehicle = next((v for v in sorted_vehicles if group_count <= v.capacity), sorted_vehicles[-1] if sorted_vehicles else None)
         
-        selected_vehicle = None
-        for v in sorted_vehicles:
-            if group_count <= v.capacity:
-                selected_vehicle = v
-                break
-        
-        # If group is larger than any single vehicle (should not happen if we capped at max_capacity), take largest
-        if not selected_vehicle and sorted_vehicles:
-            selected_vehicle = sorted_vehicles[-1]
-            
         if selected_vehicle:
             vehicle_name = selected_vehicle.name
-            # Max zone in group - Use pre-calculated Zone_Int
-            # current_group items are dicts from df rows, so they have Zone_Int
-            max_zone = max([p.get('Zone_Int', 1) for p in current_group])
+            max_zone = int(current_group['Zone_Int'].max())
             cost = selected_vehicle.zone_prices.get(max_zone, selected_vehicle.base_price)
             capacity = selected_vehicle.capacity
         else:
-            capacity = group_count # Fallback
-
+            vehicle_name, cost, capacity = "Inconnu", 0, group_count
+            
         groups.append({
             "start_time": str(start_time),
             "count": group_count,
@@ -153,10 +131,12 @@ async def analyze_optimization(planning_data: List[Dict[str, Any]], settings: Se
             "cost": cost,
             "occupancy": (group_count / capacity) * 100 if capacity > 0 else 0,
             "capacity": capacity,
-            "employees": [e.get('Employee ID', 'Unknown') for e in current_group]
+            "employees": current_group['Employee ID'].tolist()
         })
+        
+        # Move i to the next unprocessed employee (j)
+        i = j
 
-    # KPIs
     total_vehicles = len(groups)
     total_cost = sum(g['cost'] for g in groups)
     avg_occupancy = sum(g['occupancy'] for g in groups) / total_vehicles if total_vehicles > 0 else 0
@@ -164,10 +144,10 @@ async def analyze_optimization(planning_data: List[Dict[str, Any]], settings: Se
     return OptimizationResult(
         total_vehicles=total_vehicles,
         avg_occupancy_rate=round(avg_occupancy, 2),
-        total_cost_estimated=total_cost,
-        groups=groups,
+        total_cost_estimated=float(total_cost),
+        groups=groups[:100], # Return first 100 groups for UI
         details={
             "grouping_window": grouping_window,
-            "strategy": "Greedy Time-Window"
+            "total_groups": len(groups)
         }
     )
