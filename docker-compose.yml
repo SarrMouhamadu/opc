@@ -16,7 +16,7 @@ services:
       context: ./frontend
     container_name: opc_frontend
     ports:
-      - "8080:80" # Map host port 8080 to container port 80 to avoid conflict
+      - "80:80" # Map to standard HTTP port now that conflict is resolved
     depends_on:
       - backend
     restart: unless-stopped
