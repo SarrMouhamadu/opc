@@ -229,8 +229,8 @@ export class DashboardHomeComponent {
       total_cost: this.analysis.option_1_total < this.analysis.option_2_total ? this.analysis.option_1_total : this.analysis.option_2_total,
       savings: this.analysis.savings,
       details: this.analysis,
-      total_vehicles: this.analysis.kpi_option_1.total_vehicles, // Assuming Opt 1 as baseline metric or take best
-      total_employees: 0 // Not strictly tracked in breakdown, can derive or set 0
+      total_vehicles: this.analysis.kpi_option_1.total_vehicles,
+      total_employees: this.planningService.currentPlanning().length
     };
     
     this.historyService.archive(archiveData).subscribe({

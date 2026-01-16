@@ -10,7 +10,9 @@ import { MatSliderModule } from '@angular/material/slider';
 import { MatDividerModule } from '@angular/material/divider';
 import { OptimizationService, OptimizationResult } from '../../services/optimization.service';
 import { PlanningService } from '../../services/planning.service';
+import { HistoryService } from '../../services/history.service';
 import { NotificationService } from '../../services/notification.service';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-optimization-dashboard',
@@ -24,7 +26,8 @@ import { NotificationService } from '../../services/notification.service';
     MatIconModule,
     MatProgressBarModule,
     MatSliderModule,
-    MatDividerModule
+    MatDividerModule,
+    MatSnackBarModule
   ],
   template: `
     <div class="page-container">
@@ -33,9 +36,14 @@ import { NotificationService } from '../../services/notification.service';
           <h2>Optimisation & Simulation</h2>
           <p>Analysez l'impact du regroupement temporel sur votre flotte.</p>
         </div>
-        <button mat-flat-button color="primary" (click)="analyze()" [disabled]="loading || !hasData()">
-          <mat-icon>science</mat-icon> Lancer la simulation
-        </button>
+        <div class="actions">
+          <button mat-flat-button color="accent" (click)="archive()" [disabled]="loading || !results">
+            <mat-icon>archive</mat-icon> Archiver
+          </button>
+          <button mat-flat-button color="primary" (click)="analyze()" [disabled]="loading || !hasData()">
+            <mat-icon>science</mat-icon> Lancer la simulation
+          </button>
+        </div>
       </header>
 
       <div *ngIf="!hasData()" class="empty-state">
@@ -215,8 +223,31 @@ export class OptimizationDashboardComponent {
   constructor(
     private optimizationService: OptimizationService,
     private planningService: PlanningService,
-    private notificationService: NotificationService
+    private historyService: HistoryService,
+    private notificationService: NotificationService,
+    private snackBar: MatSnackBar
   ) {}
+
+  archive() {
+    if (!this.results) return;
+    
+    const archiveData = {
+      total_cost: this.results.total_cost_estimated,
+      savings: 0, // In simulation view we don't necessarily show savings against line 13
+      details: this.results,
+      total_vehicles: this.results.total_vehicles,
+      total_employees: this.planningService.currentPlanning().length
+    };
+    
+    this.historyService.archive(archiveData).subscribe({
+      next: () => {
+        this.snackBar.open('Résultats de simulation archivés !', 'OK', { duration: 3000 });
+      },
+      error: () => {
+         this.snackBar.open("Erreur lors de l'archivage.", 'Fermer', { duration: 3000 });
+      }
+    });
+  }
 
   analyze() {
     const data = this.planningService.currentPlanning();

@@ -23,7 +23,7 @@ class ArchiveRequest(BaseModel):
     savings: float
     total_vehicles: int
     total_employees: int
-    planning_summary: Dict[str, Any] # e.g. { "date": "2023-10-27", "count": 120 }
+    details: Dict[str, Any] # e.g. the full analysis or optimization result
 
 def load_history():
     if not os.path.exists(DATA_FILE):
@@ -57,7 +57,7 @@ def archive_report(request: ArchiveRequest):
         "savings": request.savings,
         "total_vehicles": request.total_vehicles,
         "total_employees": request.total_employees,
-        "data_snapshot": request.planning_summary
+        "data_snapshot": request.details
     }
     
     history.append(new_entry)
