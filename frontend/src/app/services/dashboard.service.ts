@@ -15,6 +15,11 @@ export interface CostBreakdown {
   option_2_total: number;
   savings: number;
   best_option: string;
+  n_lines: number;
+  n_employees: number;
+  n_days: number;
+  avg_cost_per_person: number;
+  avg_cost_per_pickup: number;
   kpi_option_1: KPIDetail;
   kpi_option_2: KPIDetail;
   details_option_1: any[];

@@ -57,16 +57,45 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
       </div>
 
       <div class="dashboard-content" *ngIf="analysis">
+        <!-- Validation Info -->
+        <div class="validation-banner">
+            <div class="audit-item">
+                <mat-icon>verified</mat-icon>
+                <div class="audit-text">
+                    <span class="label">Volume Audité</span>
+                    <span class="value">{{ analysis.n_lines | number }} lignes</span>
+                </div>
+            </div>
+            <div class="audit-item">
+                <mat-icon>people</mat-icon>
+                <div class="audit-text">
+                    <span class="label">Salariés Uniques</span>
+                    <span class="value">{{ analysis.n_employees }}</span>
+                </div>
+            </div>
+            <div class="audit-item">
+                <mat-icon>calendar_today</mat-icon>
+                <div class="audit-text">
+                    <span class="label">Période (Jours)</span>
+                    <span class="value">{{ analysis.n_days }}</span>
+                </div>
+            </div>
+            <div class="certification-badge">
+                <mat-icon>shield</mat-icon>
+                <span>Conformité Jury</span>
+            </div>
+        </div>
+
         <!-- Main Summary -->
         <div class="summary-section">
             <mat-card class="main-card">
                 <mat-card-header>
-                    <mat-card-title>Recommandation Automatique</mat-card-title>
+                    <mat-card-title>Recommandation Stratégique</mat-card-title>
                 </mat-card-header>
                 <mat-card-content>
                     <div class="recommendation-box" [class.opt1]="analysis.best_option.includes('Option 1')" [class.opt2]="analysis.best_option.includes('Option 2')">
                        <strong>{{ analysis.best_option }}</strong>
-                       <span>Économie estimée : {{ analysis.savings | number:'1.0-0' }} FCFA</span>
+                       <span>Économie mensuelle estimée : {{ analysis.savings | number:'1.0-0' }} FCFA</span>
                     </div>
                 </mat-card-content>
             </mat-card>
@@ -149,6 +178,17 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
     .empty-state { text-align: center; padding: 64px 24px; color: var(--text-secondary); background: var(--surface); border-radius: 12px; border: 1px dashed var(--border-color); }
     .empty-icon { width: 64px; height: 64px; background: rgba(0,0,0,0.04); border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; }
     .empty-icon mat-icon { font-size: 32px; width: 32px; height: 32px; color: #9ca3af; }
+
+    /* Validation Banner */
+    .validation-banner { display: flex; gap: 32px; background: var(--surface); padding: 16px 24px; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 24px; align-items: center; box-shadow: var(--shadow-sm); overflow-x: auto; }
+    .audit-item { display: flex; align-items: center; gap: 12px; min-width: max-content; }
+    .audit-item mat-icon { color: var(--primary-color); opacity: 0.8; }
+    .audit-text { display: flex; flex-direction: column; }
+    .audit-text .label { font-size: 10px; text-transform: uppercase; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.5px; }
+    .audit-text .value { font-size: 15px; font-weight: 700; color: var(--text-main); }
+    
+    .certification-badge { margin-left: auto; display: flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.1); color: #059669; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; border: 1px solid rgba(16, 185, 129, 0.2); }
+    .certification-badge mat-icon { font-size: 16px; width: 16px; height: 16px; }
 
     /* Summary */
     .recommendation-box { padding: 20px; text-align: center; border-radius: 8px; font-size: 18px; display: flex; flex-direction: column; gap: 8px; }

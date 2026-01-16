@@ -42,43 +42,49 @@ import { PlanningService } from '../../services/planning.service';
       <mat-progress-bar mode="indeterminate" *ngIf="loading" class="loading-bar"></mat-progress-bar>
 
       <div class="dashboard" *ngIf="results">
+        <!-- Audit Verification -->
+        <div class="audit-summary">
+            <div class="audit-badge"><mat-icon>analytics</mat-icon> Audit : {{ results.n_lines | number }} lignes traitées</div>
+            <div class="audit-badge"><mat-icon>person_outline</mat-icon> {{ results.n_employees }} salariés référencés</div>
+            <div class="audit-badge"><mat-icon>event_note</mat-icon> {{ results.n_days }} jours de planning</div>
+        </div>
+
         <!-- Stats Widgets -->
         <div class="stats-grid">
           <!-- Option 1 Widget -->
           <div class="stat-card">
             <div class="stat-header">
               <span class="stat-label">Option 1</span>
-              <mat-icon class="option-icon opt1">directions_car</mat-icon>
+              <mat-icon class="option-icon opt1">account_balance_wallet</mat-icon>
             </div>
             <div class="stat-value">{{ results.option_1_total | number:'1.0-0' }} FCFA</div>
-            <div class="stat-desc">Forfait Véhicule</div>
-            <div class="stat-bar-bg">
-              <div class="stat-bar-fill opt1" [style.width.%]="getPercentage(results.option_1_total)"></div>
-            </div>
+            <div class="unit-stat">Moyenne : <strong>{{ results.avg_cost_per_person | number:'1.0-0' }} FCFA</strong> / salarié / mois</div>
+            <div class="stat-desc">Forfait Mensuel Fixe</div>
           </div>
 
           <!-- Option 2 Widget -->
           <div class="stat-card">
             <div class="stat-header">
               <span class="stat-label">Option 2</span>
-              <mat-icon class="option-icon opt2">directions_bus</mat-icon>
+              <mat-icon class="option-icon opt2">local_taxi</mat-icon>
             </div>
             <div class="stat-value">{{ results.option_2_total | number:'1.0-0' }} FCFA</div>
-            <div class="stat-desc">Prise en charge</div>
-            <div class="stat-bar-bg">
-              <div class="stat-bar-fill opt2" [style.width.%]="getPercentage(results.option_2_total)"></div>
-            </div>
+            <div class="unit-stat">Moyenne : <strong>{{ results.avg_cost_per_pickup | number:'1.0-0' }} FCFA</strong> / trajet (unitaire)</div>
+            <div class="stat-desc">Paiement à la Prise en Charge</div>
           </div>
 
           <!-- Savings Widget -->
           <div class="stat-card highlight">
             <div class="stat-header">
-              <span class="stat-label">Économie Potentielle</span>
-              <mat-icon class="savings-icon">savings</mat-icon>
+              <span class="stat-label">Différentiel de Coût</span>
+              <mat-icon class="savings-icon">balance</mat-icon>
             </div>
-            <div class="stat-value savings-text">+{{ results.savings | number:'1.0-0' }} FCFA</div>
+            <div class="stat-value savings-text">
+                {{ (results.option_1_total > results.option_2_total ? '-' : '+') }}
+                {{ results.savings | number:'1.0-0' }} FCFA
+            </div>
             <div class="stat-desc">
-              Meilleure option : <strong>{{ results.best_option }}</strong>
+              Solution optimisée : <strong>{{ results.best_option }}</strong>
             </div>
           </div>
         </div>
@@ -86,25 +92,24 @@ import { PlanningService } from '../../services/planning.service';
         <!-- Detailed Analysis -->
         <mat-card class="details-section">
           <div class="section-header">
-            <h3>Détail des Calculs</h3>
+            <h3>Registres d'Extraction (Audit Ligne par Ligne)</h3>
           </div>
           <div class="details-content">
             <div class="grid-2-col">
               <!-- Detail Col 1 -->
               <div class="detail-column">
                 <div class="col-header">
-                  <h4>Option 1 (Véhicules)</h4>
-                  <span class="badge opt1">Détails</span>
+                  <h4>Extraction Forfaitaire (Salariés)</h4>
+                  <span class="badge opt1">Reference</span>
                 </div>
                 <div class="list-container">
                   <div *ngFor="let item of results.details_option_1" class="list-item">
                     <div class="item-main">
-                      <span class="item-date">{{ item.date }}</span>
-                      <span class="item-meta">{{ item.time }} • {{ item.count }} pers.</span>
+                      <span class="item-date">{{ item['Employee ID'] }}</span>
+                      <span class="item-meta">Zone {{ item['Zone'] }}</span>
                     </div>
                     <div class="item-end">
-                      <span class="zone-badge">Zone {{ item.max_zone }}</span>
-                      <span class="item-price">{{ item.cost | number:'1.0-0' }} FCFA</span>
+                      <span class="item-price">{{ item['emp_cost'] | number:'1.0-0' }} FCFA</span>
                     </div>
                   </div>
                 </div>
@@ -113,17 +118,17 @@ import { PlanningService } from '../../services/planning.service';
               <!-- Detail Col 2 -->
               <div class="detail-column">
                 <div class="col-header">
-                  <h4>Option 2 (Bus)</h4>
-                  <span class="badge opt2">Global</span>
+                  <h4>Extraction Prise en Charge (Trajets)</h4>
+                  <span class="badge opt2">Volume</span>
                 </div>
                  <div class="list-container">
                   <div *ngFor="let item of results.details_option_2" class="list-item">
                     <div class="item-main">
-                      <span class="item-date">Total Mensuel</span>
-                      <span class="item-meta">{{ item.count }} trajets facturés</span>
+                      <span class="item-date">{{ item['Employee ID'] }}</span>
+                      <span class="item-meta">{{ item['Ligne_Bus_Option_2'] }}</span>
                     </div>
                     <div class="item-end">
-                      <span class="item-price">{{ item.total | number:'1.0-0' }} FCFA</span>
+                      <span class="item-price">{{ item['pickup_cost'] | number:'1.0-0' }} FCFA</span>
                     </div>
                   </div>
                 </div>
@@ -149,6 +154,11 @@ import { PlanningService } from '../../services/planning.service';
 
     .loading-bar { margin-bottom: 24px; border-radius: 4px; }
 
+    /* Audit Summary */
+    .audit-summary { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+    .audit-badge { background: rgba(0,0,0,0.03); padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 13px; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; }
+    .audit-badge mat-icon { font-size: 18px; width: 18px; height: 18px; color: var(--primary-color); }
+
     /* Stats Grid */
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 32px; }
     .stat-card { background: var(--surface); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); display: flex; flex-direction: column; }
@@ -160,15 +170,13 @@ import { PlanningService } from '../../services/planning.service';
     .stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 1px; }
     .option-icon { color: var(--text-secondary); }
     .option-icon.opt1 { color: var(--primary-color); }
-    .option-icon.opt2 { color: var(--secondary-color); }
+    .option-icon.opt2 { color: #f59e0b; }
 
-    .stat-value { font-size: 28px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; }
-    .stat-desc { font-size: 13px; color: var(--text-secondary); }
-
-    .stat-bar-bg { height: 6px; background: rgba(0,0,0,0.05); border-radius: 3px; margin-top: 16px; overflow: hidden; }
-    .stat-bar-fill { height: 100%; border-radius: 3px; }
-    .stat-bar-fill.opt1 { background: var(--primary-color); }
-    .stat-bar-fill.opt2 { background: var(--secondary-color); }
+    .stat-value { font-size: 28px; font-weight: 700; color: var(--text-main); margin-bottom: 8px; }
+    .unit-stat { font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed var(--border-color); }
+    .unit-stat strong { color: var(--text-main); }
+    .stat-card.highlight .unit-stat { border-color: rgba(255,255,255,0.2); }
+    .stat-desc { font-size: 12px; color: var(--text-secondary); }
 
     /* Details Section */
     .details-section { border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); overflow: hidden; background: var(--surface); }
