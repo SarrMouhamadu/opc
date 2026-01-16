@@ -14,13 +14,14 @@ export interface CostBreakdown {
   option_1_contractual_total: number;
   option_2_contractual_total: number;
   savings: number;
-  best_option: string;
+  best_option?: string;
   n_lines: number;
   n_employees: number;
   nb_jours_observes: number;
   nb_jours_mois_reference: number;
   coverage_type: string;
   is_extrapolated: boolean;
+  can_recommend: boolean;
   avg_monthly_cost_per_employee: number;
   avg_cost_per_pickup: number;
   kpi_option_1: KPIDetail;

@@ -97,16 +97,38 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
         <div class="summary-section">
             <mat-card class="main-card">
                 <mat-card-header>
-                    <mat-card-title>Recommandation Stratégique (Contractuelle)</mat-card-title>
+                    <mat-card-title>{{ analysis.can_recommend ? 'Recommandation Stratégique (Engageante)' : 'Analyse comparative estimative (Non engageante)' }}</mat-card-title>
                 </mat-card-header>
                 <mat-card-content>
-                    <div class="extrapol-warning" *ngIf="analysis.is_extrapolated">
-                        <mat-icon>info</mat-icon>
-                        <span>Comparaison basée sur un périmètre partiel ({{ analysis.nb_jours_observes }}j, Couverture: {{ analysis.coverage_type }}). Coûts extrapolés au mois complet.</span>
+                    <!-- Disclaimer for partial data -->
+                    <div class="extrapol-disclaimer" *ngIf="!analysis.can_recommend">
+                        <mat-icon>warning_amber</mat-icon>
+                        <div class="disclaimer-content">
+                            <strong>Périmètre Partiel</strong>
+                            <span>Les coûts affichés sont extrapolés mathématiquement ({{ analysis.nb_jours_observes }}j, {{ analysis.coverage_type }}). Ils sont fournis à titre indicatif et ne peuvent faire l'objet d'un engagement contractuel.</span>
+                        </div>
                     </div>
-                    <div class="recommendation-box" [class.opt1]="analysis.best_option.includes('Option 1')" [class.opt2]="analysis.best_option.includes('Option 2')">
-                       <strong>{{ analysis.best_option }}</strong>
-                       <span>Budget mensuel estimé : {{ (analysis.best_option.includes('Option 1') ? analysis.option_1_contractual_total : analysis.option_2_contractual_total) | number:'1.0-0' }} FCFA</span>
+
+                    <!-- Genuine recommendation only if data is complete -->
+                    <div class="recommendation-box" *ngIf="analysis.can_recommend" [class.opt1]="analysis.best_option?.includes('Option 1')" [class.opt2]="analysis.best_option?.includes('Option 2')">
+                       <strong>Option Recommandée : {{ analysis.best_option }}</strong>
+                       <span>Budget mensuel cible : {{ (analysis.best_option?.includes('Option 1') ? analysis.option_1_contractual_total : analysis.option_2_contractual_total) | number:'1.0-0' }} FCFA</span>
+                    </div>
+
+                    <!-- Estimative comparison summary if partial -->
+                    <div class="estimative-summary" *ngIf="!analysis.can_recommend">
+                        <div class="est-item">
+                            <span class="label">Estimation Option 1 (Forfait)</span>
+                            <span class="value">{{ analysis.option_1_contractual_total | number:'1.0-0' }} FCFA</span>
+                        </div>
+                        <div class="est-item">
+                            <span class="label">Estimation Option 2 (Projetée)</span>
+                            <span class="value">{{ analysis.option_2_contractual_total | number:'1.0-0' }} FCFA</span>
+                        </div>
+                        <div class="est-item delta">
+                            <span class="label">Différentiel Estimé</span>
+                            <span class="value">{{ analysis.savings | number:'1.0-0' }} FCFA</span>
+                        </div>
                     </div>
                 </mat-card-content>
             </mat-card>
@@ -198,11 +220,19 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
     .certification-badge mat-icon { font-size: 16px; width: 16px; height: 16px; }
 
     /* Summary */
-    .extrapol-warning { display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(99, 102, 241, 0.05); color: #4f46e5; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; font-weight: 500; border: 1px solid rgba(99, 102, 241, 0.1); }
-    .extrapol-warning mat-icon { font-size: 18px; width: 18px; height: 18px; }
+    .extrapol-disclaimer { display: flex; gap: 12px; background: rgba(245, 158, 11, 0.05); color: #b45309; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid rgba(245, 158, 11, 0.2); align-items: flex-start; }
+    .extrapol-disclaimer mat-icon { color: #f59e0b; margin-top: 2px; }
+    .disclaimer-content { display: flex; flex-direction: column; gap: 4px; font-size: 13px; text-align: left; }
+    .disclaimer-content strong { font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+
     .recommendation-box { padding: 20px; text-align: center; border-radius: 8px; font-size: 18px; display: flex; flex-direction: column; gap: 8px; }
     .recommendation-box.opt1 { background: rgba(79, 70, 229, 0.1); color: var(--primary-color); border: 1px solid rgba(79, 70, 229, 0.2); }
     .recommendation-box.opt2 { background: rgba(16, 185, 129, 0.1); color: #059669; border: 1px solid rgba(16, 185, 129, 0.2); }
+
+    .estimative-summary { display: flex; flex-direction: column; gap: 12px; background: rgba(0,0,0,0.02); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color); }
+    .est-item { display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: var(--text-secondary); }
+    .est-item.delta { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border-color); color: var(--text-main); font-weight: 600; }
+    .est-item .value { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
     
     /* KPI Grid */
     .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
@@ -280,7 +310,7 @@ export class DashboardHomeComponent {
       total_cost: this.analysis.option_1_contractual_total < this.analysis.option_2_contractual_total ? this.analysis.option_1_contractual_total : this.analysis.option_2_contractual_total,
       savings: this.analysis.savings,
       details: this.analysis,
-      total_vehicles: this.analysis.best_option.includes('Option 1') ? this.analysis.n_employees : this.analysis.n_lines,
+      total_vehicles: this.analysis.best_option?.includes('Option 1') ? this.analysis.n_employees : this.analysis.n_lines,
       total_employees: this.planningService.currentPlanning().length
     };
     

@@ -19,15 +19,16 @@ class CostBreakdown(BaseModel):
     option_1_contractual_total: float # Σ forfait_mensuel(zone_max_par_personne)
     option_2_contractual_total: float # Σ coût_prise_en_charge (extrapolé si partiel)
     savings: float
-    best_option: str
+    best_option: Optional[str] = None
     
-    # Audit Checklist & Périmètre
+    # Audit & Validité Décisionnelle
     n_lines: int
     n_employees: int
     nb_jours_observes: int
     nb_jours_mois_reference: int = 22
     coverage_type: str # 'ALLER_RETOUR', 'ALLER', 'RETOUR'
     is_extrapolated: bool
+    can_recommend: bool # Détermine si une décision contractuelle est possible
     
     # KPIs Economiques
     avg_monthly_cost_per_employee: float
@@ -46,7 +47,6 @@ async def calculate_costs(planning_data: List[Dict[str, Any]], settings: Setting
     df = pd.DataFrame(planning_data)
     n_lines = len(df)
     
-    # 4️⃣ Alignement des garde-fous de volume
     if n_lines < 100:
         raise HTTPException(
             status_code=400, 
@@ -71,9 +71,9 @@ async def calculate_costs(planning_data: List[Dict[str, Any]], settings: Setting
     if "Ligne_Bus_Option_2" not in df.columns: df["Ligne_Bus_Option_2"] = "Ligne Indéfinie"
     if "Time" not in df.columns: df["Time"] = "00:00"
 
-    # 1️⃣ Détection automatique du périmètre
+    # Périmètre & Directions
     nb_jours_observes = df["Date"].nunique() if "Date" in df.columns else 1
-    nb_jours_ref = 22 # Standard transport mensuel (jours ouvrés)
+    nb_jours_ref = 22 
     
     try:
         hours = pd.to_datetime(df["Time"], format='%H:%M').dt.hour
@@ -95,8 +95,9 @@ async def calculate_costs(planning_data: List[Dict[str, Any]], settings: Setting
         coverage_direction = "ALLER_RETOUR"
         facteur_direction = 1
 
-    # Condition de validité mois complet
-    is_extrapolated = not (nb_jours_observes >= nb_jours_ref and coverage_direction == "ALLER_RETOUR")
+    # RÈGLE D'OR : Comparaison engageante uniquement sur périmètre complet
+    can_recommend = (nb_jours_observes >= nb_jours_ref and coverage_direction == "ALLER_RETOUR")
+    is_extrapolated = not can_recommend
 
     # Option 1 : Toujours contractuel mensuel (Forfait)
     employee_zones = df.groupby("Employee ID")["Zone_Int"].max().reset_index()
@@ -105,14 +106,14 @@ async def calculate_costs(planning_data: List[Dict[str, Any]], settings: Setting
     employee_zones["cost"] = employee_zones["Zone_Int"].apply(map_forfait)
     op1_total = employee_zones["cost"].sum()
 
-    # Option 2 : Coût à la prise en charge (Extrapolation contrôlée)
+    # Option 2 : Coût à la prise en charge
     def map_pickup(line):
         return settings.option_2_line_prices.get(line, settings.option_2_default_pickup_price)
     
     df["pickup_cost"] = df["Ligne_Bus_Option_2"].apply(map_pickup)
     op2_brut = df["pickup_cost"].sum()
     
-    # 3️⃣ Stratégie B : Extrapolation contrôlée pour rendre la comparaison valide
+    # Extrapolation estimative
     if is_extrapolated:
         extrapol_factor_jours = nb_jours_ref / nb_jours_observes
         op2_contractual = op2_brut * extrapol_factor_jours * facteur_direction
@@ -122,8 +123,10 @@ async def calculate_costs(planning_data: List[Dict[str, Any]], settings: Setting
     n_employees = employee_zones["Employee ID"].nunique()
     savings = abs(op2_contractual - op1_total)
     
-    label_status = " (Extrapolé)" if is_extrapolated else ""
-    best = f"Option 1 (Forfait){label_status}" if op1_total < op2_contractual else f"Option 2 (Prise en charge){label_status}"
+    # Best option only if can_recommend is true
+    best = None
+    if can_recommend:
+        best = "Option 1 (Forfait)" if op1_total < op2_contractual else "Option 2 (Prise en charge)"
 
     # KPIs
     op1_kpi = KPIDetail(
@@ -153,6 +156,7 @@ async def calculate_costs(planning_data: List[Dict[str, Any]], settings: Setting
         nb_jours_observes=nb_jours_observes,
         coverage_type=coverage_direction,
         is_extrapolated=is_extrapolated,
+        can_recommend=can_recommend,
         avg_monthly_cost_per_employee=op1_total / n_employees if n_employees > 0 else 0,
         avg_cost_per_pickup=avg_pickup,
         kpi_option_1=op1_kpi,
