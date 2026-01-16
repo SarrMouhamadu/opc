@@ -39,8 +39,12 @@ export class DashboardService {
   constructor(private http: HttpClient) {}
 
   // Renamed to match the strict logic
-  getKpiAnalysis(planningData: any[]): Observable<CostBreakdown> {
-    return this.http.post<CostBreakdown>(`${this.apiUrl}/costs/calculate`, planningData);
+  getKpiAnalysis(planningData: any[], coverage?: string): Observable<CostBreakdown> {
+    const payload = {
+      planning_data: planningData,
+      override_coverage: coverage
+    };
+    return this.http.post<CostBreakdown>(`${this.apiUrl}/costs/calculate`, payload);
   }
 
   // Kept for legacy if needed, or redirect to calculate

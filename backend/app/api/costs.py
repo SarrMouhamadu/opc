@@ -39,8 +39,13 @@ class CostBreakdown(BaseModel):
     details_option_1: List[Dict[str, Any]]
     details_option_2: List[Dict[str, Any]]
 
+class CalculationRequest(BaseModel):
+    planning_data: List[Dict[str, Any]]
+    override_coverage: Optional[str] = None # "ALLER", "ALLER_RETOUR"
+
 @router.post("/calculate", response_model=CostBreakdown)
-async def calculate_costs(planning_data: List[Dict[str, Any]], settings: Settings = Depends(get_settings)):
+async def calculate_costs(request: CalculationRequest, settings: Settings = Depends(get_settings)):
+    planning_data = request.planning_data
     if not planning_data:
         raise HTTPException(status_code=400, detail="Planning data is required")
 
@@ -71,29 +76,33 @@ async def calculate_costs(planning_data: List[Dict[str, Any]], settings: Setting
     if "Ligne_Bus_Option_2" not in df.columns: df["Ligne_Bus_Option_2"] = "Ligne Indéfinie"
     if "Time" not in df.columns: df["Time"] = "00:00"
 
-    # Périmètre & Directions
+    # Périmètre & Directions (Auto-détection ou Manuel)
     nb_jours_observes = df["Date"].nunique() if "Date" in df.columns else 1
     nb_jours_ref = 22 
     
-    try:
-        hours = pd.to_datetime(df["Time"], format='%H:%M').dt.hour
-        has_morning = any(hours < 12)
-        has_evening = any(hours >= 12)
-        if has_morning and has_evening: 
+    if request.override_coverage:
+        coverage_direction = request.override_coverage
+        facteur_direction = 2 if coverage_direction == "ALLER" else 1
+    else:
+        try:
+            hours = pd.to_datetime(df["Time"], format='%H:%M').dt.hour
+            has_morning = any(hours < 12)
+            has_evening = any(hours >= 12)
+            if has_morning and has_evening: 
+                coverage_direction = "ALLER_RETOUR"
+                facteur_direction = 1
+            elif has_morning: 
+                coverage_direction = "ALLER"
+                facteur_direction = 2
+            elif has_evening: 
+                coverage_direction = "RETOUR"
+                facteur_direction = 2
+            else: 
+                coverage_direction = "ALLER_RETOUR"
+                facteur_direction = 1
+        except:
             coverage_direction = "ALLER_RETOUR"
             facteur_direction = 1
-        elif has_morning: 
-            coverage_direction = "ALLER"
-            facteur_direction = 2
-        elif has_evening: 
-            coverage_direction = "RETOUR"
-            facteur_direction = 2
-        else: 
-            coverage_direction = "ALLER_RETOUR"
-            facteur_direction = 1
-    except:
-        coverage_direction = "ALLER_RETOUR"
-        facteur_direction = 1
 
     # RÈGLE D'OR : Comparaison engageante uniquement sur périmètre complet
     can_recommend = (nb_jours_observes >= nb_jours_ref and coverage_direction == "ALLER_RETOUR")

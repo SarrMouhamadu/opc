@@ -9,6 +9,8 @@ import { DashboardService, CostBreakdown } from '../../services/dashboard.servic
 import { PlanningService } from '../../services/planning.service';
 import { HistoryService } from '../../services/history.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-dashboard-home',
@@ -20,14 +22,22 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
     MatIconModule,
     MatMenuModule,
     MatProgressBarModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatButtonToggleModule,
+    FormsModule
   ],
   template: `
     <div class="page-container">
       <header class="page-header">
         <div class="header-content">
           <h2>Tableau de Bord Décisionnel</h2>
-          <p>Conformité stricte : Analyse comparative des coûts et de l'efficience.</p>
+          <div class="coverage-selector">
+            <span class="selector-label">Couverture :</span>
+            <mat-button-toggle-group [(ngModel)]="selectedCoverage" (change)="loadData()">
+              <mat-button-toggle value="ALLER_RETOUR">Aller/Retour</mat-button-toggle>
+              <mat-button-toggle value="ALLER">Aller Simple</mat-button-toggle>
+            </mat-button-toggle-group>
+          </div>
         </div>
         <div class="actions">
           <button mat-flat-button color="accent" (click)="archive()" [disabled]="!analysis">
@@ -200,8 +210,10 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
   `,
   styles: `
     .page-container { padding: 32px 40px; max-width: 1200px; margin: 0 auto; }
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; gap: 16px; }
-    .header-content h2 { font-size: 24px; margin-bottom: 4px; color: var(--text-main); }
+    .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; gap: 16px; }
+    .header-content h2 { font-size: 24px; margin-bottom: 12px; color: var(--text-main); }
+    .coverage-selector { display: flex; align-items: center; gap: 12px; background: var(--surface); padding: 4px 12px; border-radius: 8px; border: 1px solid var(--border-color); }
+    .selector-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
     .section-title { font-size: 18px; font-weight: 600; margin: 24px 0 16px; color: var(--text-main); }
 
     .empty-state { text-align: center; padding: 64px 24px; color: var(--text-secondary); background: var(--surface); border-radius: 12px; border: 1px dashed var(--border-color); }
@@ -271,6 +283,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 export class DashboardHomeComponent {
   analysis: CostBreakdown | null = null;
   hasData = computed(() => this.planningService.currentPlanning().length > 0);
+  selectedCoverage = 'ALLER_RETOUR';
   @Output() goToUpload = new EventEmitter<void>();
 
   constructor(
@@ -288,7 +301,7 @@ export class DashboardHomeComponent {
 
   loadData() {
     const data = this.planningService.currentPlanning();
-    this.dashboardService.getKpiAnalysis(data).subscribe(res => this.analysis = res);
+    this.dashboardService.getKpiAnalysis(data, this.selectedCoverage).subscribe(res => this.analysis = res);
   }
 
   export(format: 'excel' | 'pdf') {

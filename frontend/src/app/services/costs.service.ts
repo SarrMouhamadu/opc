@@ -38,7 +38,11 @@ export class CostsService {
 
   constructor(private http: HttpClient) {}
 
-  calculateCosts(planningData: any[]): Observable<CostBreakdown> {
-    return this.http.post<CostBreakdown>(`${this.apiUrl}/calculate`, planningData);
+  calculateCosts(planningData: any[], coverage?: string): Observable<CostBreakdown> {
+    const payload = {
+      planning_data: planningData,
+      override_coverage: coverage
+    };
+    return this.http.post<CostBreakdown>(`${this.apiUrl}/calculate`, payload);
   }
 }

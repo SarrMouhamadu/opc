@@ -7,6 +7,8 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatDividerModule } from '@angular/material/divider';
 import { CostsService, CostBreakdown } from '../../services/costs.service';
 import { PlanningService } from '../../services/planning.service';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-cost-comparison',
@@ -17,14 +19,22 @@ import { PlanningService } from '../../services/planning.service';
     MatButtonModule,
     MatIconModule,
     MatProgressBarModule,
-    MatDividerModule
+    MatDividerModule,
+    MatButtonToggleModule,
+    FormsModule
   ],
   template: `
     <div class="page-container">
       <header class="page-header">
         <div class="header-content">
           <h2>Analyse Comparative</h2>
-          <p>Estimation des coûts selon les différentes options de transport.</p>
+          <div class="coverage-group">
+            <span class="coverage-label">Type de Couverture :</span>
+            <mat-button-toggle-group [(ngModel)]="selectedCoverage" (change)="calculate()">
+               <mat-button-toggle value="ALLER_RETOUR">Aller/Retour</mat-button-toggle>
+               <mat-button-toggle value="ALLER">Aller Simple</mat-button-toggle>
+            </mat-button-toggle-group>
+          </div>
         </div>
         <button mat-flat-button color="primary" (click)="calculate()" [disabled]="loading || !hasData()">
           <mat-icon>play_arrow</mat-icon> Lancer le calcul
@@ -145,9 +155,10 @@ import { PlanningService } from '../../services/planning.service';
   `,
   styles: `
     .page-container { padding: 32px 40px; max-width: 1200px; margin: 0 auto; }
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; gap: 16px; }
-    .header-content h2 { font-size: 24px; margin-bottom: 4px; color: var(--text-main); }
-    .header-content p { color: var(--text-secondary); margin: 0; font-size: 14px; }
+    .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; gap: 16px; }
+    .header-content h2 { font-size: 24px; margin-bottom: 12px; color: var(--text-main); }
+    .coverage-group { display: flex; align-items: center; gap: 12px; }
+    .coverage-label { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
 
     .empty-state {
       text-align: center; padding: 64px 24px; color: var(--text-secondary); background: var(--surface);
@@ -228,6 +239,7 @@ import { PlanningService } from '../../services/planning.service';
 export class CostComparisonComponent {
   results: CostBreakdown | null = null;
   loading = false;
+  selectedCoverage = 'ALLER_RETOUR';
   hasData = computed(() => this.planningService.currentPlanning().length > 0);
 
   constructor(
@@ -246,7 +258,7 @@ export class CostComparisonComponent {
     if (data.length === 0) return;
 
     this.loading = true;
-    this.costsService.calculateCosts(data).subscribe({
+    this.costsService.calculateCosts(data, this.selectedCoverage).subscribe({
       next: (res) => {
         this.results = res;
         this.loading = false;

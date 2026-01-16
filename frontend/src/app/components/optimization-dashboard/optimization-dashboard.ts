@@ -13,6 +13,7 @@ import { PlanningService } from '../../services/planning.service';
 import { HistoryService } from '../../services/history.service';
 import { NotificationService } from '../../services/notification.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 
 @Component({
   selector: 'app-optimization-dashboard',
@@ -27,7 +28,8 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
     MatProgressBarModule,
     MatSliderModule,
     MatDividerModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatButtonToggleModule
   ],
   template: `
     <div class="page-container">
@@ -67,6 +69,17 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
               <input matSliderThumb [(ngModel)]="windowMinutes" (dragEnd)="analyze()">
             </mat-slider>
             <span class="hint">Glissez pour ajuster et relancer (0 - 60 min)</span>
+          </div>
+
+          <div class="divider-v"></div>
+
+          <div class="control-group">
+            <label>Type de Couverture :</label>
+            <mat-button-toggle-group [(ngModel)]="selectedCoverage" (change)="analyze()">
+               <mat-button-toggle value="ALLER_RETOUR">Aller/Retour</mat-button-toggle>
+               <mat-button-toggle value="ALLER">Aller Simple</mat-button-toggle>
+            </mat-button-toggle-group>
+            <span class="hint">Indiquez si le planning est unitaire ou bitrajet</span>
           </div>
         </div>
       </mat-card>
@@ -157,7 +170,9 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
     .sim-header { display: flex; align-items: center; gap: 12px; color: var(--primary-color); }
     .sim-header h3 { font-size: 16px; font-weight: 600; margin: 0; }
     
-    .control-group { display: flex; flex-direction: column; width: 100%; max-width: 400px; }
+    .sim-controls { display: flex; gap: 40px; align-items: flex-start; flex-wrap: wrap; }
+    .control-group { display: flex; flex-direction: column; flex: 1; min-width: 280px; }
+    .divider-v { width: 1px; background: var(--border-color); align-self: stretch; margin: 4px 0; }
     .control-group label { font-size: 14px; font-weight: 500; margin-bottom: 8px; color: var(--text-main); }
     .hint { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
 
@@ -216,7 +231,8 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 export class OptimizationDashboardComponent {
   results: OptimizationResult | null = null;
   loading = false;
-  windowMinutes = 20; // Default simulation value
+  windowMinutes = 20; 
+  selectedCoverage = 'ALLER_RETOUR';
   hasData = computed(() => this.planningService.currentPlanning().length > 0);
 
 
@@ -260,7 +276,7 @@ export class OptimizationDashboardComponent {
     if (data.length === 0) return;
 
     this.loading = true;
-    this.optimizationService.analyze(data, this.windowMinutes).subscribe({
+    this.optimizationService.analyze(data, this.windowMinutes, this.selectedCoverage).subscribe({
       next: (res) => {
         this.results = res;
         this.loading = false;

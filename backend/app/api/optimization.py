@@ -14,8 +14,14 @@ class OptimizationResult(BaseModel):
     groups: List[Dict[str, Any]]
     details: Dict[str, Any]
 
+class OptimizationRequest(BaseModel):
+    planning_data: List[Dict[str, Any]]
+    window_minutes: Optional[int] = None
+    override_coverage: Optional[str] = None # "ALLER", "ALLER_RETOUR"
+
 @router.post("/analyze", response_model=OptimizationResult)
-async def analyze_optimization(planning_data: List[Dict[str, Any]], settings: Settings = Depends(get_settings), window_minutes: Optional[int] = None):
+async def analyze_optimization(request: OptimizationRequest, settings: Settings = Depends(get_settings)):
+    planning_data = request.planning_data
     if not planning_data:
         raise HTTPException(status_code=400, detail="Planning data is required")
 
@@ -30,7 +36,22 @@ async def analyze_optimization(planning_data: List[Dict[str, Any]], settings: Se
         )
     
     # Use provided window or default from settings
-    grouping_window = window_minutes if window_minutes is not None else settings.grouping_window_minutes
+    grouping_window = request.window_minutes if request.window_minutes is not None else settings.grouping_window_minutes
+    
+    # Direction Coverage Factor
+    facteur_direction = 1
+    if request.override_coverage == "ALLER":
+        facteur_direction = 2
+    elif not request.override_coverage:
+        # Simple auto-detect for facteur_direction only
+        try:
+            hours = pd.to_datetime(df["Time"], format='%H:%M').dt.hour
+            has_morning = any(hours < 12)
+            has_evening = any(hours >= 12)
+            if (has_morning and not has_evening) or (not has_morning and has_evening):
+                facteur_direction = 2
+        except:
+            pass
     
     # Preprocessing
     # ensure Time is comparable. We assume Date + Time
@@ -146,7 +167,12 @@ async def analyze_optimization(planning_data: List[Dict[str, Any]], settings: Se
         i = j
 
     total_vehicles = len(groups)
-    total_cost = sum(g['cost'] for g in groups)
+    # Appliquer le facteur de direction au budget logistique mensuel estimé
+    nb_jours_ref = 22
+    nb_jours_obs = df['Date'].nunique() if 'Date' in df.columns else 1
+    extrapol_factor = nb_jours_ref / nb_jours_obs
+    
+    total_cost = sum(g['cost'] for g in groups) * extrapol_factor * facteur_direction
     avg_occupancy = sum(g['occupancy'] for g in groups) / total_vehicles if total_vehicles > 0 else 0
     
     return OptimizationResult(

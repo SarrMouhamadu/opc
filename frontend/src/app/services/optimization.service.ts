@@ -18,7 +18,12 @@ export class OptimizationService {
 
   constructor(private http: HttpClient) {}
 
-  analyze(planningData: any[], windowMinutes: number | undefined): Observable<OptimizationResult> {
-    return this.http.post<OptimizationResult>(`${this.apiUrl}/analyze?window_minutes=${windowMinutes || ''}`, planningData);
+  analyze(planningData: any[], windowMinutes: number | undefined, coverage?: string): Observable<OptimizationResult> {
+    const payload = {
+      planning_data: planningData,
+      window_minutes: windowMinutes,
+      override_coverage: coverage
+    };
+    return this.http.post<OptimizationResult>(`${this.apiUrl}/analyze`, payload);
   }
 }
