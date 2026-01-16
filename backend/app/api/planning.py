@@ -12,11 +12,9 @@ REQUIRED_OP2_COLUMN = "Ligne_Bus_Option_2"
 
 @router.post("/upload")
 async def upload_planning(file: UploadFile = File(...)):
-    if not file.filename.endswith(('.csv', '.xlsx', '.xls')):
-        raise HTTPException(status_code=400, detail="Invalid file format. Please upload a CSV or Excel file.")
+    if not file.filename.lower().endswith(('.xlsx', '.xls')):
+        raise HTTPException(status_code=400, detail="Format de fichier invalide. Seuls les fichiers Excel (.xlsx, .xls) sont acceptés.")
     
-    
-    # Canonical Mapping (Target Name -> List of acceptable aliases)
     # Canonical Mapping (Target Name -> List of acceptable aliases)
     COLUMN_MAPPING = {
         "Employee ID": ["employeeid", "employee_id", "matricule", "employe", "id", "employee", "nom", "name", "salarie", "agent", "salarie", "personne", "id_salarie"],
@@ -31,24 +29,10 @@ async def upload_planning(file: UploadFile = File(...)):
         content = await file.read()
         file_ext = file.filename.lower()
         
-        if file_ext.endswith(('.csv', '.txt')):
-            # Try valid comma separation first
-            try:
-                df = pd.read_csv(io.BytesIO(content))
-                if len(df.columns) < 2:
-                     df = pd.read_csv(io.BytesIO(content), sep=';')
-                if len(df.columns) < 2:
-                     df = pd.read_csv(io.BytesIO(content), sep='\t')
-            except:
-                 df = pd.read_csv(io.BytesIO(content), sep=';')
-        elif file_ext.endswith(('.xlsx', '.xls')):
+        if file_ext.endswith(('.xlsx', '.xls')):
             df = pd.read_excel(io.BytesIO(content))
         else:
-            # Try reading as CSV anyway for unknown types
-            try:
-                df = pd.read_csv(io.BytesIO(content))
-            except:
-                raise HTTPException(status_code=400, detail="Type de fichier non supporté. Utiliser CSV ou Excel.")
+            raise HTTPException(status_code=400, detail="Format non supporté. Utiliser uniquement Excel (.xlsx, .xls).")
         
         # --- Normalization and Mapping Logic ---
         def normalize_text(text: str) -> str:
