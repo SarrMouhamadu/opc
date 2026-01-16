@@ -64,6 +64,17 @@ import { HistoryService, HistoryEntry } from '../../services/history.service';
             <td mat-cell *matCellDef="let element" class="text-success"> +{{element.savings | number:'1.0-0'}} FCFA </td>
           </ng-container>
 
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef> Preuves </th>
+            <td mat-cell *matCellDef="let element">
+              <button mat-button color="primary" (click)="downloadProof(element)">
+                <mat-icon>download</mat-icon>
+                <span class="hide-mobile">Preuve</span>
+              </button>
+            </td>
+          </ng-container>
+
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
         </table>
@@ -120,7 +131,7 @@ import { HistoryService, HistoryEntry } from '../../services/history.service';
 })
 export class HistoryViewComponent implements OnInit {
   entries: HistoryEntry[] = [];
-  displayedColumns: string[] = ['date', 'vehicles', 'cost', 'savings'];
+  displayedColumns: string[] = ['date', 'vehicles', 'cost', 'savings', 'actions'];
 
   constructor(private historyService: HistoryService) {}
 
@@ -128,6 +139,17 @@ export class HistoryViewComponent implements OnInit {
     this.historyService.getHistory().subscribe(data => {
       this.entries = data;
     });
+  }
+
+  downloadProof(entry: HistoryEntry) {
+    const filename = `preuve_opti_${entry.date.split('T')[0]}_${entry.id}.json`;
+    const blob = new Blob([JSON.stringify(entry, null, 2)], { type: 'application/json' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
   }
 
   getBarHeight(cost: number): number {
