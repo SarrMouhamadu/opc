@@ -28,22 +28,22 @@ import { NotificationService } from '../../services/notification.service';
     <div class="page-container">
       <header class="page-header">
         <h2>Ingestion du Planning</h2>
-        <p>Importez vos données de transport (CSV, Excel) pour commencer l'analyse.</p>
+        <p>Importez vos données de transport (Excel uniquement) pour commencer l'analyse.</p>
       </header>
 
       <!-- Upload Section -->
       <div class="upload-zone" (click)="fileInput.click()" [class.dragging]="isDragging"
            (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
-        <input type="file" #fileInput (change)="onFileSelected($event)" accept=".csv,.xlsx,.xls" hidden>
+        <input type="file" #fileInput (change)="onFileSelected($event)" accept=".xlsx,.xls" hidden>
         
         <div class="upload-content">
           <div class="icon-circle">
-            <mat-icon>cloud_upload</mat-icon>
+            <mat-icon>table_view</mat-icon>
           </div>
           <h3>Déposez votre planning ici</h3>
-          <p>ou cliquez pour sélectionner un fichier (CSV, Excel)</p>
+          <p>ou cliquez pour sélectionner un fichier (Excel uniquement)</p>
           <button mat-stroked-button color="primary" (click)="$event.stopPropagation(); fileInput.click()">
-            Parcourir les fichiers
+            Parcourir les fichiers Excel
           </button>
         </div>
       </div>
