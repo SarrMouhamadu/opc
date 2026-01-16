@@ -25,7 +25,11 @@ class CostBreakdown(BaseModel):
     details_option_2: List[Dict[str, Any]]
 
 @router.post("/calculate", response_model=CostBreakdown)
-async def calculate_costs(planning_data: List[Dict[str, Any]], settings: Settings = Depends(get_settings)):
+async def calculate_costs(
+    planning_data: List[Dict[str, Any]], 
+    settings: Settings = Depends(get_settings),
+    limit: Optional[int] = 200 # Default limit for API
+):
     if not planning_data:
         raise HTTPException(status_code=400, detail="Planning data is required for calculation")
 
@@ -112,37 +116,54 @@ async def calculate_costs(planning_data: List[Dict[str, Any]], settings: Setting
     # -----------------------------------------------------
     op1_counts = df.groupby(["Date", "Time", "max_zone"]).size().reset_index(name='pax_count')
     
-    # --- OPTIMIZED CALCULATION ---
-    # RIGOROUS MIX CALCULATION
+    # --- OPTIMIZED CALCULATION ENGINE ---
     def get_optimal_mix(n, z):
         h_price = hiace_prices_map.get(z, hiace.base_price)
         b_price = berline_prices_map.get(z, berline.base_price)
-        n_b = math.ceil(n / 4)
-        cost_only_b = n_b * b_price
-        cost_1_h = h_price if n <= 13 else float('inf')
         
-        if cost_only_b <= cost_1_h:
-            return pd.Series([cost_only_b, n_b, 0, n_b * 4])
+        # 1. Combination of only Berlines
+        n_b_only = math.ceil(n / 4)
+        cost_only_b = n_b_only * b_price
+        
+        # 2. Combination of Hiaces (and one remainder Berline or Hiace)
+        n_h = n // 13
+        rem = n % 13
+        
+        cost_h_mix = n_h * h_price
+        n_b_rem = 0
+        if rem > 0:
+            # If remainder fits in 1 berline and it's cheaper than 1 hiace
+            if rem <= 4 and b_price < h_price:
+                cost_h_mix += b_price
+                n_b_rem = 1
+            else:
+                cost_h_mix += h_price
+                n_h += 1
+        
+        if cost_only_b <= cost_h_mix:
+            return pd.Series([cost_only_b, n_b_only, 0, n_b_only * 4, n])
         else:
-            return pd.Series([cost_1_h, 0, 1, 13])
+            return pd.Series([cost_h_mix, n_b_rem, n_h, (n_h * 13) + (n_b_rem * 4), n])
 
     op1_metrics = op1_counts.apply(lambda r: get_optimal_mix(r['pax_count'], r['max_zone']), axis=1)
-    op1_counts[['cost', 'n_berlines', 'n_hiaces', 'capacity']] = op1_metrics
+    op1_counts[['cost', 'n_berlines', 'n_hiaces', 'capacity', 'count']] = op1_metrics
     op1_counts['n_vehicles'] = op1_counts['n_berlines'] + op1_counts['n_hiaces']
     
-    op1_total_cost = op1_counts['cost'].sum()
-    op1_total_vehicles = op1_counts['n_vehicles'].sum()
-    op1_total_capacity = op1_counts['capacity'].sum()
+    op1_total_cost = float(op1_counts['cost'].sum())
+    op1_total_vehicles = int(op1_counts['n_vehicles'].sum())
+    op1_total_capacity = int(op1_counts['capacity'].sum())
     
     op1_zones_cost = {z: (op1_total_cost * (op2_zones_count[z] / total_pax) if total_pax > 0 else 0) for z in [1, 2, 3]}
 
-    # Prepare Detail Lists for UI
-    details_option_1 = op1_counts.head(50).rename(columns={
+    # Prepare Detail Lists for UI with optional limit
+    _counts_1 = op1_counts.head(limit) if limit else op1_counts
+    details_option_1 = _counts_1.rename(columns={
         "Date": "date", "Time": "time", "n_vehicles": "vehicles"
     }).to_dict(orient="records")
 
-    details_option_2 = op2_counts.head(50).rename(columns={
-        "Date": "date", "Time": "time", "Ligne_Bus_Option_2": "line", "n_vehicles": "vehicles"
+    _counts_2 = op2_counts.head(limit) if limit else op2_counts
+    details_option_2 = _counts_2.rename(columns={
+        "Date": "date", "Time": "time", "Ligne_Bus_Option_2": "line", "n_vehicles": "vehicles", "pax_count": "count"
     }).to_dict(orient="records")
 
     op1_kpi = KPIDetail(
