@@ -112,15 +112,15 @@ async def upload_planning(file: UploadFile = File(...)):
             "Zone": "Zone A"
         })
 
-        # Ensure we only return the clean data needed for the app
-        final_cols = ["Employee ID", "Date", "Time", "Pickup Point", "Dropoff Point", "Zone", REQUIRED_OP2_COLUMN]
-        # Keep any other columns too (the user might want to see them in preview)
-        result_df = df.head(50)
+        # Return full data (limit to 10k for safety)
+        full_data = df.head(10000).to_dict(orient="records")
+        preview_data = df.head(50).to_dict(orient="records")
         
         return {
             "filename": file.filename,
             "row_count": len(df),
-            "preview": result_df.to_dict(orient="records"),
+            "preview": preview_data,
+            "data": full_data,
             "mapped_columns": renamed_columns 
         }
     except Exception as e:

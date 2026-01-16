@@ -52,20 +52,26 @@ async def calculate_costs(planning_data: List[Dict[str, Any]], settings: Setting
             if 'C' in s: return 3
             return 1
 
+    # Optimized Zone Parsing using vectorized mapping
     if "Zone" not in df.columns: 
         df["Zone"] = 1
     else: 
-        df["Zone"] = df["Zone"].apply(parse_zone)
+        # Convert to string, then use vectorized regex or map for common cases
+        s_zones = df["Zone"].astype(str).str.upper()
+        df["Zone"] = 1 # Default
+        df.loc[s_zones.str.contains('1|A'), "Zone"] = 1
+        df.loc[s_zones.str.contains('2|B'), "Zone"] = 2
+        df.loc[s_zones.str.contains('3|C'), "Zone"] = 3
 
-    if "Ligne_Bus_Option_2" not in df.columns: df["Ligne_Bus_Option_2"] = "Ligne Indéfinie"
+    if "Ligne_Bus_Option_2" not in df.columns: 
+        df["Ligne_Bus_Option_2"] = "Ligne Indéfinie"
 
-    # --- OPTIMIZED CALCULATION ---
+    # --- VECTORIZED CALCULATIONS ---
     
-    # 1. Prepare Base DataFrame
-    df["max_zone"] = df.groupby(["Date", "Time"])["Zone"].transform("max")
+    # 1. Prepare Base Grouping
+    group_cols = ["Date", "Time"]
+    df["max_zone"] = df.groupby(group_cols)["Zone"].transform("max")
     
-    # Pre-calculate prices per vehicle/zone
-    # v.zone_prices.get(max_zone, v.base_price)
     hiace = next(v for v in settings.vehicle_types if "hiace" in v.name.lower())
     berline = next(v for v in settings.vehicle_types if v.name == "Berline")
     
@@ -75,88 +81,66 @@ async def calculate_costs(planning_data: List[Dict[str, Any]], settings: Setting
     # -----------------------------------------------------
     # OPTION 2: LINE MODE (BUS 13 PAX)
     # -----------------------------------------------------
-    op2_groups_all = df.groupby(["Date", "Time", "Ligne_Bus_Option_2", "max_zone"])
-    op2_counts = op2_groups_all.size().reset_index(name='pax_count')
-    op2_counts['n_vehicles'] = (op2_counts['pax_count'] / 13.0).apply(math.ceil)
+    op2_counts = df.groupby(group_cols + ["Ligne_Bus_Option_2", "max_zone"]).size().reset_index(name='pax_count')
+    # Use integer math for speed: (n + d - 1) // d is equivalent to ceil(n/d)
+    op2_counts['n_vehicles'] = (op2_counts['pax_count'] + 12) // 13
     op2_counts['cost'] = op2_counts['n_vehicles'] * settings.option_2_bus_price
     
     op2_total_cost = op2_counts['cost'].sum()
-    op2_total_vehicles = op2_counts['n_vehicles'].sum()
+    op2_total_vehicles = int(op2_counts['n_vehicles'].sum())
     op2_total_capacity = op2_total_vehicles * 13
 
-    # KPI Zone Attribution
-    op2_zones_count = {z: len(df[df["Zone"] == z]) for z in [1, 2, 3]}
-    # For Zone Cost, we attribute proportionally
-    # This is a bit complex in vectorized way, but let's stick to a cleaner logic
-    op2_zones_cost = {z: (op2_total_cost * (op2_zones_count[z] / len(df)) if len(df) > 0 else 0) for z in [1, 2, 3]}
-
-    op2_kpi = KPIDetail(
-        cost_per_person_zone_1=op2_zones_cost[1] / op2_zones_count[1] if op2_zones_count[1] else 0,
-        cost_per_person_zone_2=op2_zones_cost[2] / op2_zones_count[2] if op2_zones_count[2] else 0,
-        cost_per_person_zone_3=op2_zones_cost[3] / op2_zones_count[3] if op2_zones_count[3] else 0,
-        avg_occupancy_rate=(len(df) / op2_total_capacity * 100) if op2_total_capacity else 0,
-        total_vehicles=op2_total_vehicles
-    )
-
     # -----------------------------------------------------
-    # OPTION 1: VEHICLE (GREEDY)
+    # OPTION 1: VEHICLE (GREEDY VECTORIZED)
     # -----------------------------------------------------
-    op1_groups_all = df.groupby(["Date", "Time", "max_zone"])
-    op1_counts = op1_groups_all.size().reset_index(name='pax_count')
+    op1_counts = df.groupby(group_cols + ["max_zone"]).size().reset_index(name='pax_count')
     
-    def calc_op1_group(row):
-        cnt = row['pax_count']
-        z = row['max_zone']
-        cost = 0
-        v_count = 0
-        cap = 0
-        rem = cnt
-        while rem > 0:
-            if rem <= 4:
-                cost += berline_prices.get(z, berline.base_price)
-                v_count += 1
-                cap += 4
-                rem = 0
-            else:
-                cost += hiace_prices.get(z, hiace.base_price)
-                v_count += 1
-                cap += 13
-                rem -= 13
-        return pd.Series([cost, v_count, cap])
-
-    op1_counts[['cost', 'n_vehicles', 'capacity']] = op1_counts.apply(calc_op1_group, axis=1)
+    # Vectorized logic for Hiace vs Berline
+    # n_hiace = count // 13. If remainder > 4, n_hiace += 1. Else n_berline = 1.
+    pax = op1_counts['pax_count']
+    op1_counts['n_hiace'] = pax // 13
+    remainder = pax % 13
     
-    op1_total_cost = op1_counts['cost'].sum()
-    op1_total_vehicles = op1_counts['n_vehicles'].sum()
-    op1_total_capacity = op1_counts['capacity'].sum()
+    # Masking for remainder logic
+    op1_counts['n_berline'] = 0
+    mask_extra_hiace = remainder > 4
+    mask_berline = (remainder > 0) & (remainder <= 4)
     
-    op1_zones_count = {z: len(df[df["Zone"] == z]) for z in [1, 2, 3]}
-    op1_zones_cost = {z: (op1_total_cost * (op1_zones_count[z] / len(df)) if len(df) > 0 else 0) for z in [1, 2, 3]}
+    op1_counts.loc[mask_extra_hiace, 'n_hiace'] += 1
+    op1_counts.loc[mask_berline, 'n_berline'] = 1
+    
+    # Calculate costs using vectorized mapping
+    z_prices_hiace = op1_counts['max_zone'].map(hiace_prices)
+    z_prices_berline = op1_counts['max_zone'].map(berline_prices)
+    
+    op1_counts['cost'] = (op1_counts['n_hiace'] * z_prices_hiace) + (op1_counts['n_berline'] * z_prices_berline)
+    op1_counts['n_vehicles'] = op1_counts['n_hiace'] + op1_counts['n_berline']
+    op1_counts['capacity'] = (op1_counts['n_hiace'] * 13) + (op1_counts['n_berline'] * 4)
 
-    # Prepare Detail Lists for UI
-    details_option_1 = op1_counts.head(50).rename(columns={
-        "Date": "date", "Time": "time", "n_vehicles": "vehicles"
-    }).to_dict(orient="records")
+    op1_total_cost = float(op1_counts['cost'].sum())
+    op1_total_vehicles = int(op1_counts['n_vehicles'].sum())
+    op1_total_capacity = int(op1_counts['capacity'].sum())
 
-    details_option_2 = op2_counts.head(50).rename(columns={
-        "Date": "date", "Time": "time", "Ligne_Bus_Option_2": "line", "n_vehicles": "vehicles"
-    }).to_dict(orient="records")
+    # KPI Statistics
+    total_pax = len(df)
+    zone_counts = df["Zone"].value_counts().reindex([1, 2, 3], fill_value=0)
+    
+    # Attribution of costs by zone (proportional to pax for simplicity and speed)
+    def calculate_kpi(total_cost, total_vehicles, total_capacity):
+        return KPIDetail(
+            cost_per_person_zone_1=(total_cost * (zone_counts[1] / total_pax)) / zone_counts[1] if zone_counts[1] else 0,
+            cost_per_person_zone_2=(total_cost * (zone_counts[2] / total_pax)) / zone_counts[2] if zone_counts[2] else 0,
+            cost_per_person_zone_3=(total_cost * (zone_counts[3] / total_pax)) / zone_counts[3] if zone_counts[3] else 0,
+            avg_occupancy_rate=(total_pax / total_capacity * 100) if total_capacity else 0,
+            total_vehicles=total_vehicles
+        )
 
-    op1_kpi = KPIDetail(
-        cost_per_person_zone_1=op1_zones_cost[1] / op1_zones_count[1] if op1_zones_count[1] else 0,
-        cost_per_person_zone_2=op1_zones_cost[2] / op1_zones_count[2] if op1_zones_count[2] else 0,
-        cost_per_person_zone_3=op1_zones_cost[3] / op1_zones_count[3] if op1_zones_count[3] else 0,
-        avg_occupancy_rate=(len(df) / op1_total_capacity * 100) if op1_total_capacity else 0,
-        total_vehicles=int(op1_total_vehicles)
-    )
+    op1_kpi = calculate_kpi(op1_total_cost, op1_total_vehicles, op1_total_capacity)
+    op2_kpi = calculate_kpi(op2_total_cost, op2_total_vehicles, op2_total_capacity)
 
-    op2_kpi = KPIDetail(
-        cost_per_person_zone_1=op2_zones_cost[1] / op2_zones_count[1] if op2_zones_count[1] else 0,
-        cost_per_person_zone_2=op2_zones_cost[2] / op2_zones_count[2] if op2_zones_count[2] else 0,
-        cost_per_person_zone_3=op2_zones_cost[3] / op2_zones_count[3] if op2_zones_count[3] else 0,
-        avg_occupancy_rate=(len(df) / op2_total_capacity * 100) if op2_total_capacity else 0,
-        total_vehicles=int(op2_total_vehicles)
-    )
+    # UI Details
+    details_option_1 = op1_counts.head(50).rename(columns={"Date": "date", "Time": "time", "n_vehicles": "vehicles"}).to_dict(orient="records")
+    details_option_2 = op2_counts.head(50).rename(columns={"Date": "date", "Time": "time", "Ligne_Bus_Option_2": "line", "n_vehicles": "vehicles"}).to_dict(orient="records")
 
     # -----------------------------------------------------
     # RESULTS

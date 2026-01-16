@@ -18,7 +18,7 @@ export class PlanningService {
     formData.append('file', file);
     return this.http.post(`${this.apiUrl}/upload`, formData).pipe(
       tap((res: any) => {
-        this.currentPlanning.set(res.preview); // In a real app, this would be the full data
+        this.currentPlanning.set(res.data || res.preview);
       })
     );
   }
