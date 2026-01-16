@@ -107,38 +107,12 @@ import { FormsModule } from '@angular/forms';
         <div class="summary-section">
             <mat-card class="main-card">
                 <mat-card-header>
-                    <mat-card-title>{{ analysis.can_recommend ? 'Recommandation Stratégique (Engageante)' : 'Analyse comparative estimative (Non engageante)' }}</mat-card-title>
+                    <mat-card-title>Recommandation Stratégique</mat-card-title>
                 </mat-card-header>
                 <mat-card-content>
-                    <!-- Disclaimer for partial data -->
-                    <div class="extrapol-disclaimer" *ngIf="!analysis.can_recommend">
-                        <mat-icon>warning_amber</mat-icon>
-                        <div class="disclaimer-content">
-                            <strong>Périmètre Partiel</strong>
-                            <span>Les coûts affichés sont extrapolés mathématiquement ({{ analysis.nb_jours_observes }}j, {{ analysis.coverage_type }}). Ils sont fournis à titre indicatif et ne peuvent faire l'objet d'un engagement contractuel.</span>
-                        </div>
-                    </div>
-
-                    <!-- Genuine recommendation only if data is complete -->
-                    <div class="recommendation-box" *ngIf="analysis.can_recommend" [class.opt1]="analysis.best_option?.includes('Option 1')" [class.opt2]="analysis.best_option?.includes('Option 2')">
+                    <div class="recommendation-box" [class.opt1]="analysis.best_option?.includes('Option 1')" [class.opt2]="analysis.best_option?.includes('Option 2')">
                        <strong>Option Recommandée : {{ analysis.best_option }}</strong>
                        <span>Budget mensuel cible : {{ (analysis.best_option?.includes('Option 1') ? analysis.option_1_contractual_total : analysis.option_2_contractual_total) | number:'1.0-0' }} FCFA</span>
-                    </div>
-
-                    <!-- Estimative comparison summary if partial -->
-                    <div class="estimative-summary" *ngIf="!analysis.can_recommend">
-                        <div class="est-item">
-                            <span class="label">Estimation Option 1 (Forfait)</span>
-                            <span class="value">{{ analysis.option_1_contractual_total | number:'1.0-0' }} FCFA</span>
-                        </div>
-                        <div class="est-item">
-                            <span class="label">Estimation Option 2 (Projetée)</span>
-                            <span class="value">{{ analysis.option_2_contractual_total | number:'1.0-0' }} FCFA</span>
-                        </div>
-                        <div class="est-item delta">
-                            <span class="label">Différentiel Estimé</span>
-                            <span class="value">{{ analysis.savings | number:'1.0-0' }} FCFA</span>
-                        </div>
                     </div>
                 </mat-card-content>
             </mat-card>

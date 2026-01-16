@@ -132,10 +132,8 @@ async def calculate_costs(request: CalculationRequest, settings: Settings = Depe
     n_employees = employee_zones["Employee ID"].nunique()
     savings = abs(op2_contractual - op1_total)
     
-    # Best option only if can_recommend is true
-    best = None
-    if can_recommend:
-        best = "Option 1 (Forfait)" if op1_total < op2_contractual else "Option 2 (Prise en charge)"
+    # Best option (always computed)
+    best = "Option 1 (Forfait)" if op1_total < op2_contractual else "Option 2 (Prise en charge)"
 
     # KPIs
     op1_kpi = KPIDetail(
