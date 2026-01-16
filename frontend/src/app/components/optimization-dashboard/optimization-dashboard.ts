@@ -91,12 +91,12 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
           <div class="kpi-label">Taux de Remplissage Moyen</div>
         </div>
 
-        <div class="kpi-card">
+        <div class="kpi-card highlight-sim">
           <div class="kpi-icon bg-teal">
             <mat-icon>payments</mat-icon>
           </div>
-          <div class="kpi-value">{{ results.total_cost_estimated | number:'1.0-0' }} FCFA</div>
-          <div class="kpi-label">Coût Estimé (Opt 1)</div>
+          <div class="kpi-value">{{ results.estimated_logistic_budget | number:'1.0-0' }} FCFA</div>
+          <div class="kpi-label">Budget Logistique Estimé</div>
         </div>
       </div>
 
@@ -238,8 +238,8 @@ export class OptimizationDashboardComponent {
     if (!this.results) return;
     
     const archiveData = {
-      total_cost: this.results.total_cost_estimated,
-      savings: 0, // In simulation view we don't necessarily show savings against line 13
+      total_cost: this.results.estimated_logistic_budget,
+      savings: 0, 
       details: this.results,
       total_vehicles: this.results.total_vehicles,
       total_employees: this.planningService.currentPlanning().length
@@ -270,13 +270,10 @@ export class OptimizationDashboardComponent {
           type: 'success'
         });
       },
-      error: () => {
+      error: (err) => {
         this.loading = false;
-        this.notificationService.add({
-          title: 'Erreur',
-          message: 'Impossible de lancer la simulation.',
-          type: 'error'
-        });
+        const msg = err.error?.detail || 'Impossible de lancer la simulation.';
+        this.snackBar.open(msg, 'Fermer', { duration: 5000 });
       }
     });
   }

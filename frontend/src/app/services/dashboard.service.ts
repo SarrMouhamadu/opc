@@ -11,14 +11,15 @@ export interface KPIDetail {
 }
 
 export interface CostBreakdown {
-  option_1_total: number;
-  option_2_total: number;
+  option_1_contractual_total: number;
+  option_2_contractual_total: number;
   savings: number;
   best_option: string;
   n_lines: number;
   n_employees: number;
   n_days: number;
-  avg_cost_per_person: number;
+  coverage_type: string;
+  avg_monthly_cost_per_employee: number;
   avg_cost_per_pickup: number;
   kpi_option_1: KPIDetail;
   kpi_option_2: KPIDetail;

@@ -80,9 +80,16 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
                     <span class="value">{{ analysis.n_days }}</span>
                 </div>
             </div>
+            <div class="audit-item">
+                <mat-icon>swap_vert</mat-icon>
+                <div class="audit-text">
+                    <span class="label">Couverture</span>
+                    <span class="value">{{ analysis.coverage_type }}</span>
+                </div>
+            </div>
             <div class="certification-badge">
                 <mat-icon>shield</mat-icon>
-                <span>Conformité Jury</span>
+                <span>Audit Certifié</span>
             </div>
         </div>
 
@@ -90,12 +97,12 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
         <div class="summary-section">
             <mat-card class="main-card">
                 <mat-card-header>
-                    <mat-card-title>Recommandation Stratégique</mat-card-title>
+                    <mat-card-title>Recommandation Stratégique (Contractuelle)</mat-card-title>
                 </mat-card-header>
                 <mat-card-content>
                     <div class="recommendation-box" [class.opt1]="analysis.best_option.includes('Option 1')" [class.opt2]="analysis.best_option.includes('Option 2')">
                        <strong>{{ analysis.best_option }}</strong>
-                       <span>Économie mensuelle estimée : {{ analysis.savings | number:'1.0-0' }} FCFA</span>
+                       <span>Budget mensuel cible : {{ (analysis.best_option.includes('Option 1') ? analysis.option_1_contractual_total : analysis.option_2_contractual_total) | number:'1.0-0' }} FCFA</span>
                     </div>
                 </mat-card-content>
             </mat-card>
@@ -107,8 +114,8 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
             <!-- Option 1 Card -->
             <mat-card class="kpi-card">
                 <div class="card-header opt1-header">
-                    <h4>Option 1 (Véhicules)</h4>
-                    <span class="total-price">{{ analysis.option_1_total | number:'1.0-0' }} FCFA</span>
+                    <h4>Option 1 (Forfait Mensuel)</h4>
+                    <span class="total-price">{{ analysis.option_1_contractual_total | number:'1.0-0' }} FCFA</span>
                 </div>
                 <div class="kpi-list">
                     <div class="kpi-item">
@@ -125,12 +132,8 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
                     </div>
                     <div class="divider"></div>
                     <div class="kpi-item highlight">
-                        <span class="label">Taux d'Occupation</span>
-                        <span class="value">{{ analysis.kpi_option_1.avg_occupancy_rate | number:'1.0-1' }}%</span>
-                    </div>
-                    <div class="kpi-item">
-                        <span class="label">Véhicules Requis</span>
-                        <span class="value">{{ analysis.kpi_option_1.total_vehicles }}</span>
+                        <span class="label">Coût Mensuel / Salarié</span>
+                        <span class="value">{{ analysis.avg_monthly_cost_per_employee | number:'1.0-0' }} FCFA</span>
                     </div>
                 </div>
             </mat-card>
@@ -138,8 +141,8 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
             <!-- Option 2 Card -->
             <mat-card class="kpi-card">
                 <div class="card-header opt2-header">
-                    <h4>Option 2 (Lignes Bus 13)</h4>
-                    <span class="total-price">{{ analysis.option_2_total | number:'1.0-0' }} FCFA</span>
+                    <h4>Option 2 (Prise en Charge)</h4>
+                    <span class="total-price">{{ analysis.option_2_contractual_total | number:'1.0-0' }} FCFA</span>
                 </div>
                 <div class="kpi-list">
                     <div class="kpi-item">
@@ -156,12 +159,12 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
                     </div>
                     <div class="divider"></div>
                     <div class="kpi-item highlight">
-                        <span class="label">Taux d'Occupation</span>
-                        <span class="value">{{ analysis.kpi_option_2.avg_occupancy_rate | number:'1.0-1' }}%</span>
+                        <span class="label">Coût Moyen / Trajet</span>
+                        <span class="value">{{ analysis.avg_cost_per_pickup | number:'1.0-0' }} FCFA</span>
                     </div>
                      <div class="kpi-item">
-                        <span class="label">Bus Requis (13 pl.)</span>
-                        <span class="value">{{ analysis.kpi_option_2.total_vehicles }}</span>
+                        <span class="label">Total Prises en Charge</span>
+                        <span class="value">{{ analysis.n_lines | number }}</span>
                     </div>
                 </div>
             </mat-card>
@@ -268,10 +271,10 @@ export class DashboardHomeComponent {
     if (!this.analysis) return;
     // Archive format update needed? For now just save summary
     const archiveData = {
-      total_cost: this.analysis.option_1_total < this.analysis.option_2_total ? this.analysis.option_1_total : this.analysis.option_2_total,
+      total_cost: this.analysis.option_1_contractual_total < this.analysis.option_2_contractual_total ? this.analysis.option_1_contractual_total : this.analysis.option_2_contractual_total,
       savings: this.analysis.savings,
       details: this.analysis,
-      total_vehicles: this.analysis.kpi_option_1.total_vehicles,
+      total_vehicles: this.analysis.best_option.includes('Option 1') ? this.analysis.n_employees : this.analysis.n_lines,
       total_employees: this.planningService.currentPlanning().length
     };
     

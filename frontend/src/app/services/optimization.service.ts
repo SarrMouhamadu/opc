@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 export interface OptimizationResult {
   total_vehicles: number;
   avg_occupancy_rate: number;
-  total_cost_estimated: number;
+  estimated_logistic_budget: number;
   groups: any[];
   details: any;
 }

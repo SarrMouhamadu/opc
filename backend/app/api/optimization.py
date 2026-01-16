@@ -10,7 +10,7 @@ router = APIRouter(prefix="/optimization", tags=["Optimization"])
 class OptimizationResult(BaseModel):
     total_vehicles: int
     avg_occupancy_rate: float
-    total_cost_estimated: float
+    estimated_logistic_budget: float # Nature: Simulation logistique
     groups: List[Dict[str, Any]]
     details: Dict[str, Any]
 
@@ -20,6 +20,14 @@ async def analyze_optimization(planning_data: List[Dict[str, Any]], settings: Se
         raise HTTPException(status_code=400, detail="Planning data is required")
 
     df = pd.DataFrame(planning_data)
+    n_lines = len(df)
+
+    # 4️⃣ Alignement des garde-fous de volume (Seuil métier 10 000 lignes)
+    if n_lines < 10000:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Simulation refusée : Volume insuffisant ({n_lines}/10000). L'optimisation requiert un jeu de données complet."
+        )
     
     # Use provided window or default from settings
     grouping_window = window_minutes if window_minutes is not None else settings.grouping_window_minutes
@@ -144,7 +152,7 @@ async def analyze_optimization(planning_data: List[Dict[str, Any]], settings: Se
     return OptimizationResult(
         total_vehicles=total_vehicles,
         avg_occupancy_rate=round(avg_occupancy, 2),
-        total_cost_estimated=float(total_cost),
+        estimated_logistic_budget=float(total_cost),
         groups=groups[:100], # Return first 100 groups for UI
         details={
             "grouping_window": grouping_window,

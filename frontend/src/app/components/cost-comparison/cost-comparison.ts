@@ -44,9 +44,9 @@ import { PlanningService } from '../../services/planning.service';
       <div class="dashboard" *ngIf="results">
         <!-- Audit Verification -->
         <div class="audit-summary">
-            <div class="audit-badge"><mat-icon>analytics</mat-icon> Audit : {{ results.n_lines | number }} lignes traitées</div>
-            <div class="audit-badge"><mat-icon>person_outline</mat-icon> {{ results.n_employees }} salariés référencés</div>
-            <div class="audit-badge"><mat-icon>event_note</mat-icon> {{ results.n_days }} jours de planning</div>
+            <div class="audit-badge"><mat-icon>analytics</mat-icon> Audit : {{ results.n_lines | number }} lignes</div>
+            <div class="audit-badge"><mat-icon>person_outline</mat-icon> {{ results.n_employees }} salariés</div>
+            <div class="audit-badge"><mat-icon>swap_vert</mat-icon> {{ results.coverage_type }}</div>
         </div>
 
         <!-- Stats Widgets -->
@@ -54,33 +54,33 @@ import { PlanningService } from '../../services/planning.service';
           <!-- Option 1 Widget -->
           <div class="stat-card">
             <div class="stat-header">
-              <span class="stat-label">Option 1</span>
+              <span class="stat-label">Option 1 (Forfait)</span>
               <mat-icon class="option-icon opt1">account_balance_wallet</mat-icon>
             </div>
-            <div class="stat-value">{{ results.option_1_total | number:'1.0-0' }} FCFA</div>
-            <div class="unit-stat">Moyenne : <strong>{{ results.avg_cost_per_person | number:'1.0-0' }} FCFA</strong> / salarié / mois</div>
-            <div class="stat-desc">Forfait Mensuel Fixe</div>
+            <div class="stat-value">{{ results.option_1_contractual_total | number:'1.0-0' }} FCFA</div>
+            <div class="unit-stat">Moyenne : <strong>{{ results.avg_monthly_cost_per_employee | number:'1.0-0' }} FCFA</strong> / employé / mois</div>
+            <div class="stat-desc">Base Auditée sur Zone Max</div>
           </div>
 
           <!-- Option 2 Widget -->
           <div class="stat-card">
             <div class="stat-header">
-              <span class="stat-label">Option 2</span>
+              <span class="stat-label">Option 2 (Unitaire)</span>
               <mat-icon class="option-icon opt2">local_taxi</mat-icon>
             </div>
-            <div class="stat-value">{{ results.option_2_total | number:'1.0-0' }} FCFA</div>
-            <div class="unit-stat">Moyenne : <strong>{{ results.avg_cost_per_pickup | number:'1.0-0' }} FCFA</strong> / trajet (unitaire)</div>
-            <div class="stat-desc">Paiement à la Prise en Charge</div>
+            <div class="stat-value">{{ results.option_2_contractual_total | number:'1.0-0' }} FCFA</div>
+            <div class="unit-stat">Moyenne : <strong>{{ results.avg_cost_per_pickup | number:'1.0-0' }} FCFA</strong> / trajet facturé</div>
+            <div class="stat-desc">Totalité des lignes du planning</div>
           </div>
 
           <!-- Savings Widget -->
           <div class="stat-card highlight">
             <div class="stat-header">
-              <span class="stat-label">Différentiel de Coût</span>
+              <span class="stat-label">Résultat d'Audit Coût</span>
               <mat-icon class="savings-icon">balance</mat-icon>
             </div>
             <div class="stat-value savings-text">
-                {{ (results.option_1_total > results.option_2_total ? '-' : '+') }}
+                {{ (results.option_1_contractual_total > results.option_2_contractual_total ? '-' : '+') }}
                 {{ results.savings | number:'1.0-0' }} FCFA
             </div>
             <div class="stat-desc">
@@ -252,7 +252,7 @@ export class CostComparisonComponent {
 
   getPercentage(value: number): number {
     if (!this.results) return 0;
-    const max = Math.max(this.results.option_1_total, this.results.option_2_total);
+    const max = Math.max(this.results.option_1_contractual_total, this.results.option_2_contractual_total);
     return (value / max) * 100;
   }
 }
