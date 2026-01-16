@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter } from '@angular/core';
+import { Component, Output, EventEmitter, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
@@ -51,17 +51,17 @@ import { NotificationService } from '../../services/notification.service';
       <mat-progress-bar mode="indeterminate" *ngIf="uploading" class="upload-progress"></mat-progress-bar>
 
       <!-- Preview Section -->
-      <div class="preview-card" *ngIf="previewData.length > 0">
+      <div class="preview-card" *ngIf="previewData().length > 0">
         <div class="card-header">
           <div class="header-title">
             <mat-icon>table_chart</mat-icon>
             <h3>Aperçu des données</h3>
           </div>
-          <span class="badge">{{ totalRows }} entrées importées</span>
+          <span class="badge">{{ totalRows() }} entrées importées</span>
         </div>
         
         <div class="table-container">
-          <table mat-table [dataSource]="previewData">
+          <table mat-table [dataSource]="previewData()">
             <ng-container *ngFor="let col of displayedColumns" [matColumnDef]="col">
               <th mat-header-cell *matHeaderCellDef> {{ col }} </th>
               <td mat-cell *matCellDef="let element"> {{ element[col] }} </td>
@@ -222,9 +222,11 @@ export class UploadPlanning {
   
   selectedFile: File | null = null;
   uploading = false;
-  previewData: any[] = [];
+  
+  previewData = computed(() => this.planningService.currentPlanning().slice(0, 50));
+  totalRows = computed(() => this.planningService.currentPlanning().length);
+  
   displayedColumns: string[] = ["Employee ID", "Date", "Time", "Pickup Point", "Dropoff Point"];
-  totalRows = 0;
   isDragging = false;
 
 
@@ -274,14 +276,12 @@ export class UploadPlanning {
     this.uploading = true;
     this.planningService.uploadPlanning(this.selectedFile).subscribe({
       next: (res) => {
-        this.previewData = res.preview;
-        this.totalRows = res.row_count;
         this.uploading = false;
         
         // App Notification
         this.notificationService.add({
           title: 'Import Réussi',
-          message: `${this.totalRows} lignes importées depuis ${this.selectedFile?.name}`,
+          message: `${res.row_count} lignes importées depuis ${this.selectedFile?.name}`,
           type: 'success'
         });
 

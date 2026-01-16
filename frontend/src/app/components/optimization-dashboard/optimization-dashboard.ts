@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
@@ -226,7 +226,13 @@ export class OptimizationDashboardComponent {
     private historyService: HistoryService,
     private notificationService: NotificationService,
     private snackBar: MatSnackBar
-  ) {}
+  ) {
+    effect(() => {
+      if (this.hasData() && !this.results) {
+        this.analyze();
+      }
+    });
+  }
 
   archive() {
     if (!this.results) return;

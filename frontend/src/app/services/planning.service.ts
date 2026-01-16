@@ -11,14 +11,29 @@ export class PlanningService {
   // Shared state for the uploaded planning
   currentPlanning = signal<any[]>([]);
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    this.restoreState();
+  }
+
+  private restoreState() {
+    this.http.get<any>(`${this.apiUrl}/current`).subscribe({
+      next: (res) => {
+        if (res.rows && res.rows.length > 0) {
+          this.currentPlanning.set(res.rows);
+        }
+      }
+    });
+  }
 
   uploadPlanning(file: File): Observable<any> {
     const formData = new FormData();
     formData.append('file', file);
     return this.http.post(`${this.apiUrl}/upload`, formData).pipe(
       tap((res: any) => {
-        this.currentPlanning.set(res.preview); // In a real app, this would be the full data
+        // Here we ideally want use the data returned by upload or re-fetch.
+        // Since the upload now returns a preview, but the server saves full data,
+        // let's re-fetch the full data to ensure the app has everything.
+        this.restoreState();
       })
     );
   }
