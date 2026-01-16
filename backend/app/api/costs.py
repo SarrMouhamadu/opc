@@ -4,7 +4,6 @@ from typing import List, Dict, Any, Optional
 from app.api.settings import get_settings, Settings, VehicleType
 import pandas as pd
 import math
-from app.api.audit import log_event
 
 router = APIRouter(prefix="/costs", tags=["Costs"])
 
@@ -164,8 +163,6 @@ async def calculate_costs(planning_data: List[Dict[str, Any]], settings: Setting
     # -----------------------------------------------------
     savings = op2_total_cost - op1_total_cost 
     best = "Option 1 (Véhicules)" if op1_total_cost < op2_total_cost else "Option 2 (Lignes Bus)"
-
-    log_event("Calcul des Coûts", f"Analyse terminée. Meilleure option: {best}")
 
     return CostBreakdown(
         option_1_total=op1_total_cost,

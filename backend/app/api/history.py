@@ -4,7 +4,6 @@ from typing import List, Dict, Any, Optional
 import json
 import os
 from datetime import datetime
-from app.api.audit import log_event
 
 router = APIRouter(prefix="/history", tags=["History"])
 
@@ -63,9 +62,6 @@ def archive_report(request: ArchiveRequest):
     
     history.append(new_entry)
     save_history(history)
-    
-    log_event("Archivage Rapport", f"ID: {new_entry['id']}, Coût: {request.total_cost} FCFA, Économies: {request.savings} FCFA")
-
     return {"message": "Report archived successfully", "id": new_entry["id"]}
 
 @router.get("/stats")

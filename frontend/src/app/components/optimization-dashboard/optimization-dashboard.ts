@@ -136,10 +136,10 @@ import { NotificationService } from '../../services/notification.service';
     .header-content p { color: var(--text-secondary); margin: 0; font-size: 14px; }
 
     .empty-state {
-      text-align: center; padding: 64px 0; color: var(--text-secondary);
+      text-align: center; padding: 64px 24px; color: var(--text-secondary);
       background: var(--surface); border-radius: var(--radius-lg); border: 1px dashed var(--border-color);
     }
-    .empty-icon { width: 64px; height: 64px; background: var(--bg-app); border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; }
+    .empty-icon { width: 64px; height: 64px; background: rgba(0,0,0,0.04); border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; }
     .empty-icon mat-icon { font-size: 32px; width: 32px; height: 32px; color: var(--text-secondary); }
 
     .simulation-card {
@@ -149,22 +149,22 @@ import { NotificationService } from '../../services/notification.service';
     .sim-header { display: flex; align-items: center; gap: 12px; color: var(--primary-color); }
     .sim-header h3 { font-size: 16px; font-weight: 600; margin: 0; }
     
-    .control-group { display: flex; flex-direction: column; max-width: 400px; }
+    .control-group { display: flex; flex-direction: column; width: 100%; max-width: 400px; }
     .control-group label { font-size: 14px; font-weight: 500; margin-bottom: 8px; color: var(--text-main); }
     .hint { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
 
-    .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; margin-bottom: 32px; }
+    .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 32px; }
     
     .kpi-card { background: var(--surface); padding: 24px; border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; align-items: center; text-align: center; }
     .kpi-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; color: white; }
     .bg-indigo { background: #6366f1; } .bg-pink { background: #ec4899; } .bg-teal { background: #14b8a6; }
-    .kpi-value { font-size: 32px; font-weight: 700; color: var(--text-main); line-height: 1; margin-bottom: 8px; }
-    .kpi-label { font-size: 13px; color: var(--text-secondary); font-weight: 500; text-transform: uppercase; }
+    .kpi-value { font-size: 28px; font-weight: 700; color: var(--text-main); line-height: 1; margin-bottom: 8px; }
+    .kpi-label { font-size: 12px; color: var(--text-secondary); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
 
     .timeline-card { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border-color); overflow: hidden; }
-    .card-header { padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--surface); }
+    .card-header { padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--surface); gap: 12px; }
     .card-header h3 { font-size: 16px; margin: 0; color: var(--text-main); }
-    .badge { background: #e0e7ff; color: #4338ca; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+    .badge { background: rgba(79, 70, 229, 0.1); color: var(--primary-color); padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; }
     
     .timeline-container { height: 400px; overflow-y: auto; padding: 24px; background: var(--bg-app); }
     .timeline-list { display: flex; flex-direction: column; gap: 16px; position: relative; }
@@ -175,11 +175,11 @@ import { NotificationService } from '../../services/notification.service';
     .time { font-size: 12px; font-weight: 600; color: var(--text-secondary); background: var(--bg-app); padding-bottom: 8px; z-index: 1; }
     
     .group-content { flex: 1; background: var(--surface); padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); }
-    .group-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .group-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 8px; }
     .vehicle-type { font-weight: 600; font-size: 14px; color: var(--text-main); }
     
     .occupancy-indicator { display: flex; align-items: center; gap: 8px; }
-    .occupancy-track { width: 80px; height: 6px; background: #f3f4f6; border-radius: 3px; overflow: hidden; }
+    .occupancy-track { width: 60px; height: 6px; background: rgba(0,0,0,0.05); border-radius: 3px; overflow: hidden; }
     .occupancy-fill { height: 100%; background: #ef4444; }
     .occupancy-fill.med { background: #f59e0b; }
     .occupancy-fill.high { background: #10b981; }
@@ -188,17 +188,20 @@ import { NotificationService } from '../../services/notification.service';
     .group-details { font-size: 12px; color: var(--text-secondary); display: flex; justify-content: flex-end; }
     .cost { font-weight: 600; color: var(--primary-color); }
 
-    @media (max-width: 768px) {
+    @media (max-width: 960px) {
       .page-container { padding: 20px; }
       .page-header { flex-direction: column; align-items: flex-start; }
       .page-header button { width: 100%; }
-      .dashboard-grid { grid-template-columns: 1fr; }
       .timeline-container { padding: 16px; }
-      .timeline-list::before { left: 19px; }
-      .time-marker { min-width: 40px; }
+    }
+
+    @media (max-width: 600px) {
+      .header-content h2 { font-size: 20px; }
       .timeline-item { gap: 12px; }
-      .occupancy-track { width: 40px; }
-      .card-header { padding: 16px; flex-direction: column; align-items: flex-start; gap: 12px; }
+      .timeline-list::before { left: 25px; }
+      .time-marker { min-width: 50px; }
+      .occupancy-track { display: none; }
+      .card-header { padding: 16px; }
     }
   `
 })

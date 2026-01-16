@@ -64,14 +64,16 @@ import { AuthService } from '../../services/auth.service';
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #f3f4f6;
+      background: var(--bg-app);
+      padding: 20px;
     }
     .login-card {
       width: 100%;
       max-width: 400px;
       padding: 32px;
-      border-radius: 16px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      background: var(--surface);
     }
     .header {
       text-align: center;
@@ -80,7 +82,7 @@ import { AuthService } from '../../services/auth.service';
     .logo-icon {
       width: 48px;
       height: 48px;
-      background: var(--primary-color, #4f46e5);
+      background: var(--primary-color);
       border-radius: 12px;
       display: flex;
       align-items: center;
@@ -89,14 +91,14 @@ import { AuthService } from '../../services/auth.service';
       margin: 0 auto 16px;
     }
     .logo-icon mat-icon { font-size: 32px; width: 32px; height: 32px; }
-    .header h2 { font-size: 24px; font-weight: 700; margin: 0; color: #1f2937; }
-    .header p { color: #6b7280; margin-top: 4px; }
+    .header h2 { font-size: 24px; font-weight: 700; margin: 0; color: var(--text-main); }
+    .header p { color: var(--text-secondary); margin-top: 4px; }
     
     .full-width { width: 100%; margin-bottom: 16px; }
     
     .error-msg {
-      color: #dc2626;
-      background: #fee2e2;
+      color: var(--error);
+      background: rgba(239, 68, 68, 0.1);
       padding: 12px;
       border-radius: 8px;
       margin-bottom: 16px;
@@ -108,6 +110,13 @@ import { AuthService } from '../../services/auth.service';
       width: 100%;
       height: 48px;
       font-size: 16px;
+    }
+
+    @media (max-width: 480px) {
+      .login-card {
+        padding: 24px 16px;
+      }
+      .header h2 { font-size: 20px; }
     }
   `
 })

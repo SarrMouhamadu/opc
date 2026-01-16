@@ -135,101 +135,44 @@ import { PlanningService } from '../../services/planning.service';
     </div>
   `,
   styles: `
-    .page-container {
-      padding: 32px 40px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 32px;
-      gap: 16px;
-    }
+    .page-container { padding: 32px 40px; max-width: 1200px; margin: 0 auto; }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; gap: 16px; }
     .header-content h2 { font-size: 24px; margin-bottom: 4px; color: var(--text-main); }
     .header-content p { color: var(--text-secondary); margin: 0; font-size: 14px; }
 
     .empty-state {
-      text-align: center;
-      padding: 64px 0;
-      color: var(--text-secondary);
-      background: var(--surface);
-      border-radius: var(--radius-lg);
-      border: 1px dashed var(--border-color);
+      text-align: center; padding: 64px 24px; color: var(--text-secondary); background: var(--surface);
+      border-radius: var(--radius-lg); border: 1px dashed var(--border-color);
     }
-    .empty-icon {
-      width: 64px;
-      height: 64px;
-      background: #f3f4f6;
-      border-radius: 50%;
-      margin: 0 auto 16px;
-      display: flex; align-items: center; justify-content: center;
-    }
+    .empty-icon { width: 64px; height: 64px; background: rgba(0,0,0,0.04); border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; }
     .empty-icon mat-icon { font-size: 32px; width: 32px; height: 32px; color: #9ca3af; }
 
     .loading-bar { margin-bottom: 24px; border-radius: 4px; }
 
     /* Stats Grid */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 24px;
-      margin-bottom: 32px;
-    }
-
-    .stat-card {
-      background: var(--surface);
-      border-radius: var(--radius-lg);
-      padding: 24px;
-      box-shadow: var(--shadow-sm);
-      border: 1px solid var(--border-color);
-      display: flex;
-      flex-direction: column;
-    }
-    .stat-card.highlight {
-      background: linear-gradient(135deg, #10b981, #059669);
-      color: white;
-      border: none;
-    }
-    .stat-card.highlight .stat-label, 
-    .stat-card.highlight .stat-value, 
-    .stat-card.highlight .stat-desc,
-    .stat-card.highlight strong { color: white; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 32px; }
+    .stat-card { background: var(--surface); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); display: flex; flex-direction: column; }
+    .stat-card.highlight { background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; }
+    .stat-card.highlight .stat-label, .stat-card.highlight .stat-value, .stat-card.highlight .stat-desc, .stat-card.highlight strong { color: white; }
+    .stat-card.highlight .savings-icon { color: rgba(255,255,255,0.8); }
 
     .stat-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-    .stat-label { font-size: 13px; font-weight: 600; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.5px; }
+    .stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 1px; }
     .option-icon { color: var(--text-secondary); }
-    .option-icon.opt1 { color: #4f46e5; }
-    .option-icon.opt2 { color: #ec4899; }
+    .option-icon.opt1 { color: var(--primary-color); }
+    .option-icon.opt2 { color: var(--secondary-color); }
 
-    .stat-value { font-size: 32px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; }
-    .stat-desc { font-size: 14px; color: var(--text-secondary); }
+    .stat-value { font-size: 28px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; }
+    .stat-desc { font-size: 13px; color: var(--text-secondary); }
 
-    .stat-bar-bg {
-      height: 6px;
-      background: #f3f4f6;
-      border-radius: 3px;
-      margin-top: 16px;
-      overflow: hidden;
-    }
+    .stat-bar-bg { height: 6px; background: rgba(0,0,0,0.05); border-radius: 3px; margin-top: 16px; overflow: hidden; }
     .stat-bar-fill { height: 100%; border-radius: 3px; }
-    .stat-bar-fill.opt1 { background: #4f46e5; }
-    .stat-bar-fill.opt2 { background: #ec4899; }
+    .stat-bar-fill.opt1 { background: var(--primary-color); }
+    .stat-bar-fill.opt2 { background: var(--secondary-color); }
 
     /* Details Section */
-    .details-section {
-      border-radius: var(--radius-lg);
-      border: 1px solid var(--border-color);
-      box-shadow: var(--shadow-sm);
-      overflow: hidden;
-    }
-    .section-header {
-      padding: 20px 24px;
-      border-bottom: 1px solid var(--border-color);
-      background: #fcfcfc;
-    }
+    .details-section { border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); overflow: hidden; background: var(--surface); }
+    .section-header { padding: 20px 24px; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.01); }
     .section-header h3 { font-size: 16px; margin: 0; color: var(--text-main); }
     
     .grid-2-col { display: grid; grid-template-columns: 1fr 1fr; }
@@ -237,32 +180,33 @@ import { PlanningService } from '../../services/planning.service';
     .detail-column:first-child { border-right: 1px solid var(--border-color); }
 
     .col-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .col-header h4 { font-size: 14px; color: var(--text-secondary); margin: 0; font-weight: 600; }
+    .col-header h4 { font-size: 13px; color: var(--text-secondary); margin: 0; font-weight: 600; text-transform: uppercase; }
     
-    .badge { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
-    .badge.opt1 { background: #eef2ff; color: #4f46e5; }
-    .badge.opt2 { background: #fdf2f8; color: #ec4899; }
+    .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; }
+    .badge.opt1 { background: rgba(79, 70, 229, 0.1); color: var(--primary-color); }
+    .badge.opt2 { background: rgba(236, 72, 153, 0.1); color: var(--secondary-color); }
 
-    .list-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 0;
-      border-bottom: 1px solid #f3f4f6;
-    }
-    .item-date { font-weight: 500; font-size: 14px; }
+    .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-color); }
+    .list-item:last-child { border-bottom: none; }
+    .item-main { display: flex; flex-direction: column; }
+    .item-date { font-weight: 600; font-size: 14px; color: var(--text-main); }
     .item-meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
-    .item-end { display: flex; align-items: center; gap: 12px; }
-    .zone-badge { font-size: 11px; background: #f3f4f6; padding: 2px 6px; border-radius: 4px; color: var(--text-secondary); }
-    .item-price { font-weight: 600; color: var(--text-main); }
+    .item-end { display: flex; align-items: center; gap: 8px; }
+    .zone-badge { font-size: 10px; background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 4px; color: var(--text-secondary); font-weight: 600; }
+    .item-price { font-weight: 700; color: var(--text-main); font-size: 14px; }
 
-    @media (max-width: 768px) {
+    @media (max-width: 960px) {
       .page-container { padding: 20px; }
       .page-header { flex-direction: column; align-items: flex-start; }
       .page-header button { width: 100%; }
-      .stat-value { font-size: 24px; }
       .grid-2-col { grid-template-columns: 1fr; }
       .detail-column:first-child { border-right: none; border-bottom: 1px solid var(--border-color); }
+    }
+
+    @media (max-width: 600px) {
+      .header-content h2 { font-size: 20px; }
+      .stat-value { font-size: 24px; }
+      .detail-column { padding: 16px; }
     }
   `
 })

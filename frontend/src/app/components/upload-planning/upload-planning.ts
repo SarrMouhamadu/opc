@@ -28,20 +28,20 @@ import { NotificationService } from '../../services/notification.service';
     <div class="page-container">
       <header class="page-header">
         <h2>Ingestion du Planning</h2>
-        <p>Importez vos données de transport (Excel uniquement) pour commencer l'analyse.</p>
+        <p>Importez vos données de transport (CSV, Excel) pour commencer l'analyse.</p>
       </header>
 
       <!-- Upload Section -->
       <div class="upload-zone" (click)="fileInput.click()" [class.dragging]="isDragging"
            (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
-        <input type="file" #fileInput (change)="onFileSelected($event)" accept=".xlsx,.xls" hidden>
+        <input type="file" #fileInput (change)="onFileSelected($event)" accept=".csv,.xlsx,.xls" hidden>
         
         <div class="upload-content">
           <div class="icon-circle">
             <mat-icon>cloud_upload</mat-icon>
           </div>
           <h3>Déposez votre planning ici</h3>
-          <p>ou cliquez pour sélectionner un fichier (Excel .xlsx, .xls)</p>
+          <p>ou cliquez pour sélectionner un fichier (CSV, Excel)</p>
           <button mat-stroked-button color="primary" (click)="$event.stopPropagation(); fileInput.click()">
             Parcourir les fichiers
           </button>
@@ -83,9 +83,12 @@ import { NotificationService } from '../../services/notification.service';
 
     .page-header {
       margin-bottom: 32px;
+      gap: 12px;
+      display: flex;
+      flex-direction: column;
     }
-    .page-header h2 { font-size: 24px; margin-bottom: 8px; color: var(--text-main); }
-    .page-header p { color: var(--text-secondary); font-size: 14px; }
+    .page-header h2 { font-size: 24px; margin-bottom: 4px; color: var(--text-main); }
+    .page-header p { color: var(--text-secondary); font-size: 14px; margin: 0; }
 
     /* Drag & Drop Zone */
     .upload-zone {
@@ -101,10 +104,11 @@ import { NotificationService } from '../../services/notification.service';
       margin-bottom: 32px;
       position: relative;
       overflow: hidden;
+      padding: 24px;
     }
     .upload-zone:hover, .upload-zone.dragging {
       border-color: var(--primary-color);
-      background: #eef2ff;
+      background: rgba(79, 70, 229, 0.04);
     }
     .upload-zone.dragging::after {
       content: '';
@@ -120,12 +124,11 @@ import { NotificationService } from '../../services/notification.service';
       flex-direction: column;
       align-items: center;
       gap: 16px;
-      padding: 20px;
     }
     .icon-circle {
       width: 64px;
       height: 64px;
-      background: #e0e7ff;
+      background: rgba(79, 70, 229, 0.1);
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -155,7 +158,8 @@ import { NotificationService } from '../../services/notification.service';
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: #fcfcfc;
+      background: rgba(0,0,0,0.01);
+      gap: 12px;
     }
     .header-title {
       display: flex;
@@ -167,13 +171,13 @@ import { NotificationService } from '../../services/notification.service';
     .header-title mat-icon { color: var(--text-secondary); }
 
     .badge {
-      background: #ecfdf5;
+      background: rgba(16, 185, 129, 0.1);
       color: #059669;
-      padding: 6px 12px;
+      padding: 4px 12px;
       border-radius: 20px;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
-      border: 1px solid #d1fae5;
+      border: 1px solid rgba(16, 185, 129, 0.2);
     }
 
     .table-container {
@@ -183,10 +187,10 @@ import { NotificationService } from '../../services/notification.service';
     table { width: 100%; border-collapse: collapse; min-width: 600px; }
     
     th.mat-mdc-header-cell {
-      background: #f9fafb;
+      background: var(--bg-app);
       color: var(--text-secondary);
       font-weight: 600;
-      font-size: 12px;
+      font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       padding: 16px 24px;
@@ -195,18 +199,21 @@ import { NotificationService } from '../../services/notification.service';
     td.mat-mdc-cell {
       padding: 14px 24px;
       color: var(--text-main);
-      border-bottom: 1px solid #f3f4f6;
-      font-size: 14px;
-    }
-    tr.mat-mdc-row:hover {
-      background: #f9fafb;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 13px;
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 960px) {
       .page-container { padding: 20px; }
       .upload-zone { height: 220px; }
-      .card-header { flex-direction: column; align-items: flex-start; gap: 12px; }
-      .badge { align-self: flex-start; }
+    }
+
+    @media (max-width: 600px) {
+      .page-header h2 { font-size: 20px; }
+      .card-header { flex-direction: column; align-items: flex-start; }
+      .icon-circle { width: 48px; height: 48px; }
+      .icon-circle mat-icon { font-size: 24px; width: 24px; height: 24px; }
+      .upload-content h3 { font-size: 16px; }
     }
   `,
 })
@@ -257,11 +264,6 @@ export class UploadPlanning {
   }
 
   handleFile(file: File) {
-    const ext = file.name.split('.').pop()?.toLowerCase();
-    if (ext !== 'xlsx' && ext !== 'xls') {
-      this.snackBar.open('Seuls les fichiers Excel (.xlsx, .xls) sont acceptés.', 'Fermer', { duration: 5000 });
-      return;
-    }
     this.selectedFile = file;
     this.upload();
   }

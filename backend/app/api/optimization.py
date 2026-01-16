@@ -4,7 +4,6 @@ from typing import List, Dict, Any, Optional
 from app.api.settings import get_settings, Settings, VehicleType
 import pandas as pd
 from datetime import datetime, timedelta
-from app.api.audit import log_event
 
 router = APIRouter(prefix="/optimization", tags=["Optimization"])
 
@@ -139,10 +138,9 @@ async def analyze_optimization(planning_data: List[Dict[str, Any]], settings: Se
         i = j
 
     total_vehicles = len(groups)
+    total_cost = sum(g['cost'] for g in groups)
     avg_occupancy = sum(g['occupancy'] for g in groups) / total_vehicles if total_vehicles > 0 else 0
     
-    log_event("Simulation Optimisation", f"Fenêtre: {grouping_window} min, Véhicules: {total_vehicles}, Coût: {total_cost} FCFA")
-
     return OptimizationResult(
         total_vehicles=total_vehicles,
         avg_occupancy_rate=round(avg_occupancy, 2),
