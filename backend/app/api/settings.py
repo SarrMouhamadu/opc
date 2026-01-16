@@ -23,17 +23,33 @@ class Settings(BaseModel):
         VehicleType(name="Hiace", capacity=13, base_price=25000.0, zone_prices={1: 25000.0, 2: 35000.0, 3: 45000.0})
     ]
 
-# In-memory storage for demonstration (should be persistent in a real SaaS)
-current_settings = Settings()
+import json
+import os
+
+SETTINGS_FILE = "data/settings.json"
+
+def load_settings_file():
+    if os.path.exists(SETTINGS_FILE):
+        try:
+            with open(SETTINGS_FILE, "r") as f:
+                data = json.load(f)
+                return Settings(**data)
+        except:
+            pass
+    return Settings()
+
+def save_settings_file(settings: Settings):
+    os.makedirs(os.path.dirname(SETTINGS_FILE), exist_ok=True)
+    with open(SETTINGS_FILE, "w") as f:
+        json.dump(settings.dict(), f, indent=2)
 
 @router.get("/", response_model=Settings)
 async def get_settings():
-    return current_settings
+    return load_settings_file()
 
 @router.post("/", response_model=Settings)
 async def update_settings(settings: Settings):
-    global current_settings
     if settings.grouping_window_minutes <= 0:
         raise HTTPException(status_code=400, detail="Grouping window must be positive")
-    current_settings = settings
-    return current_settings
+    save_settings_file(settings)
+    return settings

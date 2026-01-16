@@ -1,4 +1,4 @@
-import { Component, OnInit, computed } from '@angular/core';
+import { Component, OnInit, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -218,7 +218,13 @@ export class CostComparisonComponent {
   constructor(
     private costsService: CostsService,
     private planningService: PlanningService
-  ) {}
+  ) {
+    effect(() => {
+      if (this.hasData() && !this.results) {
+        this.calculate();
+      }
+    });
+  }
 
   calculate() {
     const data = this.planningService.currentPlanning();

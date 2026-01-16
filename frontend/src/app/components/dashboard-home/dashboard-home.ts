@@ -1,4 +1,4 @@
-import { Component, computed, signal, Output, EventEmitter } from '@angular/core';
+import { Component, computed, signal, Output, EventEmitter, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -200,9 +200,11 @@ export class DashboardHomeComponent {
     private historyService: HistoryService,
     private snackBar: MatSnackBar
   ) {
-    if (this.hasData()) {
-      this.loadData();
-    }
+    effect(() => {
+      if (this.hasData() && !this.analysis) {
+        this.loadData();
+      }
+    });
   }
 
   loadData() {

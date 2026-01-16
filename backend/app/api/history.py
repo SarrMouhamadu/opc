@@ -4,10 +4,13 @@ from typing import List, Dict, Any, Optional
 import json
 import os
 from datetime import datetime
+from app.api.auth import get_current_user
 
 router = APIRouter(prefix="/history", tags=["History"])
 
-DATA_FILE = "data/history.json"
+# Global to ensure directory exists
+DATA_DIR = os.path.join(os.getcwd(), "data")
+DATA_FILE = os.path.join(DATA_DIR, "history.json")
 
 class HistoryEntry(BaseModel):
     id: Optional[str] = None
@@ -25,7 +28,12 @@ class ArchiveRequest(BaseModel):
     total_employees: int
     details: Dict[str, Any] # e.g. the full analysis or optimization result
 
+def ensure_data_dir():
+    if not os.path.exists(DATA_DIR):
+        os.makedirs(DATA_DIR, exist_ok=True)
+
 def load_history():
+    ensure_data_dir()
     if not os.path.exists(DATA_FILE):
         return []
     try:
@@ -35,19 +43,19 @@ def load_history():
         return []
 
 def save_history(history):
-    os.makedirs(os.path.dirname(DATA_FILE), exist_ok=True)
+    ensure_data_dir()
     with open(DATA_FILE, "w") as f:
         json.dump(history, f, indent=2)
 
 @router.get("/", response_model=List[HistoryEntry])
-def get_history():
+def get_history(current_user: Any = Depends(get_current_user)):
     data = load_history()
     # Sort by date desc
     data.sort(key=lambda x: x['date'], reverse=True)
     return data
 
 @router.post("/")
-def archive_report(request: ArchiveRequest):
+def archive_report(request: ArchiveRequest, current_user: Any = Depends(get_current_user)):
     history = load_history()
     
     new_entry = {
@@ -65,10 +73,8 @@ def archive_report(request: ArchiveRequest):
     return {"message": "Report archived successfully", "id": new_entry["id"]}
 
 @router.get("/stats")
-def get_stats():
+def get_stats(current_user: Any = Depends(get_current_user)):
     history = load_history()
-    # Aggregate by month (simple version)
-    # Return { "Nov 2023": 1200, "Dec 2023": 1100 }
     stats = {}
     for entry in history:
         dt = datetime.fromisoformat(entry['date'])
@@ -76,5 +82,4 @@ def get_stats():
         if month_key not in stats:
             stats[month_key] = 0
         stats[month_key] += entry['total_cost']
-        
     return stats
