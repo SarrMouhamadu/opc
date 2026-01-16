@@ -15,21 +15,23 @@ class KPIDetail(BaseModel):
     total_vehicles: int
 
 class CostBreakdown(BaseModel):
-    # Nature : Coûts Contractuels (Facturation Mensuelle)
+    # Nature : Coûts Contractuels (Base Mensuelle)
     option_1_contractual_total: float # Σ forfait_mensuel(zone_max_par_personne)
-    option_2_contractual_total: float # Σ coût_prise_en_charge (toutes lignes)
+    option_2_contractual_total: float # Σ coût_prise_en_charge (extrapolé si partiel)
     savings: float
     best_option: str
     
-    # Audit Checklist
+    # Audit Checklist & Périmètre
     n_lines: int
     n_employees: int
-    n_days: int
-    coverage_type: str # 'Complet (A/R)', 'Aller uniquement', 'Retour uniquement' ou 'Partiel'
+    nb_jours_observes: int
+    nb_jours_mois_reference: int = 22
+    coverage_type: str # 'ALLER_RETOUR', 'ALLER', 'RETOUR'
+    is_extrapolated: bool
     
-    # KPIs Economiques (Contractuels)
-    avg_monthly_cost_per_employee: float # Option 1
-    avg_cost_per_pickup: float # Option 2
+    # KPIs Economiques
+    avg_monthly_cost_per_employee: float
+    avg_cost_per_pickup: float
     
     kpi_option_1: KPIDetail
     kpi_option_2: KPIDetail
@@ -44,11 +46,11 @@ async def calculate_costs(planning_data: List[Dict[str, Any]], settings: Setting
     df = pd.DataFrame(planning_data)
     n_lines = len(df)
     
-    # Ajustement du garde-fou pour le test final (Seuil abaissé à 100 pour autoriser le fichier de 252 lignes)
+    # 4️⃣ Alignement des garde-fous de volume
     if n_lines < 100:
         raise HTTPException(
             status_code=400, 
-            detail=f"Audit invalidé : Volume insuffisant ({n_lines}/100). Le calcul contractuel mensuel requiert un jeu de données minimal."
+            detail=f"Audit invalidé : Volume insuffisant ({n_lines}/100). Un minimum de 100 lignes est requis pour l'analyse."
         )
 
     # Pre-processing Zone
@@ -69,42 +71,59 @@ async def calculate_costs(planning_data: List[Dict[str, Any]], settings: Setting
     if "Ligne_Bus_Option_2" not in df.columns: df["Ligne_Bus_Option_2"] = "Ligne Indéfinie"
     if "Time" not in df.columns: df["Time"] = "00:00"
 
-    # 5️⃣ Prise en compte du périmètre réel (Aller / Retour)
-    # On analyse les créneaux horaires pour détecter la couverture
+    # 1️⃣ Détection automatique du périmètre
+    nb_jours_observes = df["Date"].nunique() if "Date" in df.columns else 1
+    nb_jours_ref = 22 # Standard transport mensuel (jours ouvrés)
+    
     try:
         hours = pd.to_datetime(df["Time"], format='%H:%M').dt.hour
         has_morning = any(hours < 12)
         has_evening = any(hours >= 12)
-        if has_morning and has_evening: coverage = "Complet (A/R)"
-        elif has_morning: coverage = "Aller uniquement"
-        elif has_evening: coverage = "Retour uniquement"
-        else: coverage = "Indéterminé"
+        if has_morning and has_evening: 
+            coverage_direction = "ALLER_RETOUR"
+            facteur_direction = 1
+        elif has_morning: 
+            coverage_direction = "ALLER"
+            facteur_direction = 2
+        elif has_evening: 
+            coverage_direction = "RETOUR"
+            facteur_direction = 2
+        else: 
+            coverage_direction = "ALLER_RETOUR"
+            facteur_direction = 1
     except:
-        coverage = "Indéterminé"
+        coverage_direction = "ALLER_RETOUR"
+        facteur_direction = 1
 
-    # 1️⃣ Zone forfaitaire incorrecte (Option 1)
-    # Calcul de la zone maximale réellement rencontrée par salarié sur le mois
+    # Condition de validité mois complet
+    is_extrapolated = not (nb_jours_observes >= nb_jours_ref and coverage_direction == "ALLER_RETOUR")
+
+    # Option 1 : Toujours contractuel mensuel (Forfait)
     employee_zones = df.groupby("Employee ID")["Zone_Int"].max().reset_index()
-    
     def map_forfait(z):
         return settings.option_1_forfait_prices.get(z, settings.option_1_forfait_prices[1])
-
     employee_zones["cost"] = employee_zones["Zone_Int"].apply(map_forfait)
     op1_total = employee_zones["cost"].sum()
 
-    # 3️⃣ Correction des KPI Option 2 (Somme exhaustive sur toutes les lignes)
+    # Option 2 : Coût à la prise en charge (Extrapolation contrôlée)
     def map_pickup(line):
         return settings.option_2_line_prices.get(line, settings.option_2_default_pickup_price)
-
+    
     df["pickup_cost"] = df["Ligne_Bus_Option_2"].apply(map_pickup)
-    op2_total = df["pickup_cost"].sum()
+    op2_brut = df["pickup_cost"].sum()
+    
+    # 3️⃣ Stratégie B : Extrapolation contrôlée pour rendre la comparaison valide
+    if is_extrapolated:
+        extrapol_factor_jours = nb_jours_ref / nb_jours_observes
+        op2_contractual = op2_brut * extrapol_factor_jours * facteur_direction
+    else:
+        op2_contractual = op2_brut
 
     n_employees = employee_zones["Employee ID"].nunique()
-    n_days = df["Date"].nunique() if "Date" in df.columns else 1
-
-    # Separation des natures de coûts : Ce sont ici des coûts CONTRACTUELS
-    savings = abs(op2_total - op1_total)
-    best = "Option 1 (Forfait Mensuel)" if op1_total < op2_total else "Option 2 (Prise en charge Ligne)"
+    savings = abs(op2_contractual - op1_total)
+    
+    label_status = " (Extrapolé)" if is_extrapolated else ""
+    best = f"Option 1 (Forfait){label_status}" if op1_total < op2_contractual else f"Option 2 (Prise en charge){label_status}"
 
     # KPIs
     op1_kpi = KPIDetail(
@@ -115,8 +134,7 @@ async def calculate_costs(planning_data: List[Dict[str, Any]], settings: Setting
         total_vehicles=n_employees
     )
     
-    # KPI Option 2 : Coût par prise en charge (Unité économique exacte)
-    avg_pickup = op2_total / n_lines if n_lines > 0 else 0
+    avg_pickup = op2_brut / n_lines if n_lines > 0 else 0
     op2_kpi = KPIDetail(
         cost_per_person_zone_1=avg_pickup,
         cost_per_person_zone_2=0,
@@ -127,13 +145,14 @@ async def calculate_costs(planning_data: List[Dict[str, Any]], settings: Setting
 
     return CostBreakdown(
         option_1_contractual_total=op1_total,
-        option_2_contractual_total=op2_total,
+        option_2_contractual_total=op2_contractual,
         savings=savings,
         best_option=best,
         n_lines=n_lines,
         n_employees=n_employees,
-        n_days=n_days,
-        coverage_type=coverage,
+        nb_jours_observes=nb_jours_observes,
+        coverage_type=coverage_direction,
+        is_extrapolated=is_extrapolated,
         avg_monthly_cost_per_employee=op1_total / n_employees if n_employees > 0 else 0,
         avg_cost_per_pickup=avg_pickup,
         kpi_option_1=op1_kpi,

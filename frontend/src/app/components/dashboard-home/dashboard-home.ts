@@ -76,8 +76,8 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
             <div class="audit-item">
                 <mat-icon>calendar_today</mat-icon>
                 <div class="audit-text">
-                    <span class="label">Période (Jours)</span>
-                    <span class="value">{{ analysis.n_days }}</span>
+                    <span class="label">Période (Obs.)</span>
+                    <span class="value">{{ analysis.nb_jours_observes }} j / {{ analysis.nb_jours_mois_reference }}</span>
                 </div>
             </div>
             <div class="audit-item">
@@ -100,9 +100,13 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
                     <mat-card-title>Recommandation Stratégique (Contractuelle)</mat-card-title>
                 </mat-card-header>
                 <mat-card-content>
+                    <div class="extrapol-warning" *ngIf="analysis.is_extrapolated">
+                        <mat-icon>info</mat-icon>
+                        <span>Comparaison basée sur un périmètre partiel ({{ analysis.nb_jours_observes }}j, Couverture: {{ analysis.coverage_type }}). Coûts extrapolés au mois complet.</span>
+                    </div>
                     <div class="recommendation-box" [class.opt1]="analysis.best_option.includes('Option 1')" [class.opt2]="analysis.best_option.includes('Option 2')">
                        <strong>{{ analysis.best_option }}</strong>
-                       <span>Budget mensuel cible : {{ (analysis.best_option.includes('Option 1') ? analysis.option_1_contractual_total : analysis.option_2_contractual_total) | number:'1.0-0' }} FCFA</span>
+                       <span>Budget mensuel estimé : {{ (analysis.best_option.includes('Option 1') ? analysis.option_1_contractual_total : analysis.option_2_contractual_total) | number:'1.0-0' }} FCFA</span>
                     </div>
                 </mat-card-content>
             </mat-card>
@@ -194,6 +198,8 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
     .certification-badge mat-icon { font-size: 16px; width: 16px; height: 16px; }
 
     /* Summary */
+    .extrapol-warning { display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(99, 102, 241, 0.05); color: #4f46e5; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; font-weight: 500; border: 1px solid rgba(99, 102, 241, 0.1); }
+    .extrapol-warning mat-icon { font-size: 18px; width: 18px; height: 18px; }
     .recommendation-box { padding: 20px; text-align: center; border-radius: 8px; font-size: 18px; display: flex; flex-direction: column; gap: 8px; }
     .recommendation-box.opt1 { background: rgba(79, 70, 229, 0.1); color: var(--primary-color); border: 1px solid rgba(79, 70, 229, 0.2); }
     .recommendation-box.opt2 { background: rgba(16, 185, 129, 0.1); color: #059669; border: 1px solid rgba(16, 185, 129, 0.2); }

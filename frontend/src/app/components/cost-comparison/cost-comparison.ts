@@ -46,7 +46,8 @@ import { PlanningService } from '../../services/planning.service';
         <div class="audit-summary">
             <div class="audit-badge"><mat-icon>analytics</mat-icon> Audit : {{ results.n_lines | number }} lignes</div>
             <div class="audit-badge"><mat-icon>person_outline</mat-icon> {{ results.n_employees }} salariés</div>
-            <div class="audit-badge"><mat-icon>swap_vert</mat-icon> {{ results.coverage_type }}</div>
+            <div class="audit-badge"><mat-icon>calendar_today</mat-icon> {{ results.nb_jours_observes }} j / {{ results.nb_jours_mois_reference }}</div>
+            <div class="audit-badge" [class.warning]="results.is_extrapolated"><mat-icon>swap_vert</mat-icon> {{ results.coverage_type }}</div>
         </div>
 
         <!-- Stats Widgets -->
@@ -59,7 +60,7 @@ import { PlanningService } from '../../services/planning.service';
             </div>
             <div class="stat-value">{{ results.option_1_contractual_total | number:'1.0-0' }} FCFA</div>
             <div class="unit-stat">Moyenne : <strong>{{ results.avg_monthly_cost_per_employee | number:'1.0-0' }} FCFA</strong> / employé / mois</div>
-            <div class="stat-desc">Base Auditée sur Zone Max</div>
+            <div class="stat-desc">Forfait Mensuel Fixe</div>
           </div>
 
           <!-- Option 2 Widget -->
@@ -68,15 +69,18 @@ import { PlanningService } from '../../services/planning.service';
               <span class="stat-label">Option 2 (Unitaire)</span>
               <mat-icon class="option-icon opt2">local_taxi</mat-icon>
             </div>
-            <div class="stat-value">{{ results.option_2_contractual_total | number:'1.0-0' }} FCFA</div>
+            <div class="stat-value">
+                {{ results.option_2_contractual_total | number:'1.0-0' }} FCFA
+                <span class="extrapol-tag" *ngIf="results.is_extrapolated">ESTIMÉ</span>
+            </div>
             <div class="unit-stat">Moyenne : <strong>{{ results.avg_cost_per_pickup | number:'1.0-0' }} FCFA</strong> / trajet facturé</div>
-            <div class="stat-desc">Totalité des lignes du planning</div>
+            <div class="stat-desc">Projeté sur mois complet</div>
           </div>
 
           <!-- Savings Widget -->
           <div class="stat-card highlight">
             <div class="stat-header">
-              <span class="stat-label">Résultat d'Audit Coût</span>
+              <span class="stat-label">Différentiel Stratégique</span>
               <mat-icon class="savings-icon">balance</mat-icon>
             </div>
             <div class="stat-value savings-text">
@@ -158,8 +162,11 @@ import { PlanningService } from '../../services/planning.service';
     .audit-summary { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
     .audit-badge { background: rgba(0,0,0,0.03); padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 13px; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; }
     .audit-badge mat-icon { font-size: 18px; width: 18px; height: 18px; color: var(--primary-color); }
+    .audit-badge.warning { background: rgba(245, 158, 11, 0.05); color: #b45309; border-color: rgba(245, 158, 11, 0.2); }
+    .audit-badge.warning mat-icon { color: #f59e0b; }
 
     /* Stats Grid */
+    .extrapol-tag { font-size: 10px; background: #4f46e5; color: white; padding: 2px 6px; border-radius: 4px; vertical-align: middle; margin-left: 8px; letter-spacing: 0.5px; }
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 32px; }
     .stat-card { background: var(--surface); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); display: flex; flex-direction: column; }
     .stat-card.highlight { background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; }

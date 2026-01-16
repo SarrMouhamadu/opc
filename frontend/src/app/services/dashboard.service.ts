@@ -17,8 +17,10 @@ export interface CostBreakdown {
   best_option: string;
   n_lines: number;
   n_employees: number;
-  n_days: number;
+  nb_jours_observes: number;
+  nb_jours_mois_reference: number;
   coverage_type: string;
+  is_extrapolated: boolean;
   avg_monthly_cost_per_employee: number;
   avg_cost_per_pickup: number;
   kpi_option_1: KPIDetail;
