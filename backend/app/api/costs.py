@@ -59,10 +59,13 @@ async def calculate_costs(planning_data: List[Dict[str, Any]], settings: Setting
     if "Zone" not in df.columns: 
         df["Zone"] = 1
     else: 
-        # Map unique values instead of applying to every row
         unique_zones = df["Zone"].unique()
         zone_map = {z: parse_zone_fast(z) for z in unique_zones}
         df["Zone"] = df["Zone"].map(zone_map)
+
+    # Robust Date/Time formatting
+    df['Date'] = df['Date'].astype(str)
+    df['Time'] = df['Time'].astype(str)
 
     if "Ligne_Bus_Option_2" not in df.columns: df["Ligne_Bus_Option_2"] = "Ligne Indéfinie"
 
@@ -109,32 +112,29 @@ async def calculate_costs(planning_data: List[Dict[str, Any]], settings: Setting
     # -----------------------------------------------------
     op1_counts = df.groupby(["Date", "Time", "max_zone"]).size().reset_index(name='pax_count')
     
-    # Vectorized calculation for Option 1
-    pax = op1_counts['pax_count']
-    op1_counts['n_hiaces'] = pax // 13
-    rem = pax % 13
-    
-    # Remainder logic: if 1-4 pax -> 1 berline, if 5+ pax -> 1 hiace
-    op1_counts.loc[rem > 4, 'n_hiaces'] += 1
-    op1_counts['n_berlines'] = 0
-    op1_counts.loc[(rem > 0) & (rem <= 4), 'n_berlines'] = 1
-    
-    # Assign prices based on max_zone
-    op1_counts['hiace_unit_price'] = op1_counts['max_zone'].map(hiace_prices_map)
-    op1_counts['berline_unit_price'] = op1_counts['max_zone'].map(berline_prices_map)
-    
-    op1_counts['cost'] = (op1_counts['n_hiaces'] * op1_counts['hiace_unit_price']) + \
-                         (op1_counts['n_berlines'] * op1_counts['berline_unit_price'])
-    
-    op1_counts['n_vehicles'] = op1_counts['n_hiaces'] + op1_counts['n_berlines']
-    op1_counts['capacity'] = (op1_counts['n_hiaces'] * 13) + (op1_counts['n_berlines'] * 4)
+    # --- OPTIMIZED CALCULATION ---
+    # RIGOROUS MIX CALCULATION
+    def get_optimal_mix(n, z):
+        h_price = hiace_prices_map.get(z, hiace.base_price)
+        b_price = berline_prices_map.get(z, berline.base_price)
+        n_b = math.ceil(n / 4)
+        cost_only_b = n_b * b_price
+        cost_1_h = h_price if n <= 13 else float('inf')
+        
+        if cost_only_b <= cost_1_h:
+            return pd.Series([cost_only_b, n_b, 0, n_b * 4])
+        else:
+            return pd.Series([cost_1_h, 0, 1, 13])
+
+    op1_metrics = op1_counts.apply(lambda r: get_optimal_mix(r['pax_count'], r['max_zone']), axis=1)
+    op1_counts[['cost', 'n_berlines', 'n_hiaces', 'capacity']] = op1_metrics
+    op1_counts['n_vehicles'] = op1_counts['n_berlines'] + op1_counts['n_hiaces']
     
     op1_total_cost = op1_counts['cost'].sum()
     op1_total_vehicles = op1_counts['n_vehicles'].sum()
     op1_total_capacity = op1_counts['capacity'].sum()
     
-    op1_zones_count = op2_zones_count # Same pax distribution
-    op1_zones_cost = {z: (op1_total_cost * (op1_zones_count[z] / total_pax) if total_pax > 0 else 0) for z in [1, 2, 3]}
+    op1_zones_cost = {z: (op1_total_cost * (op2_zones_count[z] / total_pax) if total_pax > 0 else 0) for z in [1, 2, 3]}
 
     # Prepare Detail Lists for UI
     details_option_1 = op1_counts.head(50).rename(columns={

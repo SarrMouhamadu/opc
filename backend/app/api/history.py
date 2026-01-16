@@ -48,21 +48,35 @@ def get_history():
 
 @router.post("/")
 def archive_report(request: ArchiveRequest):
-    history = load_history()
-    
-    new_entry = {
-        "id": f"arch_{int(datetime.now().timestamp())}",
-        "date": datetime.now().isoformat(),
-        "total_cost": request.total_cost,
-        "savings": request.savings,
-        "total_vehicles": request.total_vehicles,
-        "total_employees": request.total_employees,
-        "data_snapshot": request.planning_summary
-    }
-    
-    history.append(new_entry)
-    save_history(history)
-    return {"message": "Report archived successfully", "id": new_entry["id"]}
+    try:
+        # Ensure directory exists before loading or saving
+        os.makedirs(os.path.dirname(DATA_FILE), exist_ok=True)
+        
+        history = load_history()
+        
+        # Rigorous ID generation
+        timestamp = int(datetime.now().timestamp())
+        new_entry = {
+            "id": f"arch_{timestamp}_{len(history)}",
+            "date": datetime.now().isoformat(),
+            "total_cost": request.total_cost,
+            "savings": request.savings,
+            "total_vehicles": request.total_vehicles,
+            "total_employees": request.total_employees,
+            "data_snapshot": request.planning_summary
+        }
+        
+        history.append(new_entry)
+        
+        # Save and verify
+        save_history(history)
+        
+        return {"message": "Rapport archivé avec succès", "id": new_entry["id"]}
+    except Exception as e:
+        import traceback
+        print(f"CRITICAL ERROR in archive_report: {str(e)}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Échec de l'archivage : {str(e)}")
 
 @router.get("/stats")
 def get_stats():
