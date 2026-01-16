@@ -2,6 +2,7 @@ from fastapi import APIRouter, UploadFile, File, HTTPException
 import pandas as pd
 import io
 from typing import List, Dict, Any
+from app.api.audit import log_event
 
 router = APIRouter(prefix="/planning", tags=["Planning"])
 
@@ -12,10 +13,10 @@ REQUIRED_OP2_COLUMN = "Ligne_Bus_Option_2"
 
 @router.post("/upload")
 async def upload_planning(file: UploadFile = File(...)):
-    if not file.filename.lower().endswith(('.xlsx', '.xls')):
-        raise HTTPException(status_code=400, detail="Format de fichier invalide. Seuls les fichiers Excel (.xlsx, .xls) sont acceptés.")
+    if not file.filename.endswith(('.xlsx', '.xls')):
+        raise HTTPException(status_code=400, detail="Format de fichier invalide. Veuillez importer uniquement des fichiers Excel (.xlsx, .xls).")
     
-    # Canonical Mapping (Target Name -> List of acceptable aliases)
+    # ... (COLUMN_MAPPING stays same)
     COLUMN_MAPPING = {
         "Employee ID": ["employeeid", "employee_id", "matricule", "employe", "id", "employee", "nom", "name", "salarie", "agent", "salarie", "personne", "id_salarie"],
         "Date": ["date", "jour", "day", "periode", "date_vire", "date_transport"],
@@ -32,7 +33,7 @@ async def upload_planning(file: UploadFile = File(...)):
         if file_ext.endswith(('.xlsx', '.xls')):
             df = pd.read_excel(io.BytesIO(content))
         else:
-            raise HTTPException(status_code=400, detail="Format non supporté. Utiliser uniquement Excel (.xlsx, .xls).")
+            raise HTTPException(status_code=400, detail="Type de fichier non supporté. Utiliser Excel uniquement (.xlsx, .xls).")
         
         # --- Normalization and Mapping Logic ---
         def normalize_text(text: str) -> str:
@@ -116,6 +117,8 @@ async def upload_planning(file: UploadFile = File(...)):
         final_cols = ["Employee ID", "Date", "Time", "Pickup Point", "Dropoff Point", "Zone", REQUIRED_OP2_COLUMN]
         # Keep any other columns too (the user might want to see them in preview)
         result_df = df.head(50)
+        
+        log_event("Importation Planning", f"Fichier: {file.filename}, Lignes: {len(df)}")
         
         return {
             "filename": file.filename,

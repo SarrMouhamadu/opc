@@ -7,9 +7,6 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatDividerModule } from '@angular/material/divider';
 import { CostsService, CostBreakdown } from '../../services/costs.service';
 import { PlanningService } from '../../services/planning.service';
-import { HistoryService } from '../../services/history.service';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-cost-comparison',
@@ -29,14 +26,9 @@ import { NotificationService } from '../../services/notification.service';
           <h2>Analyse Comparative</h2>
           <p>Estimation des coûts selon les différentes options de transport.</p>
         </div>
-        <div class="actions">
-          <button mat-stroked-button color="accent" (click)="saveToHistory()" *ngIf="results" [disabled]="saving">
-            <mat-icon>save</mat-icon> Sauvegarder
-          </button>
-          <button mat-flat-button color="primary" (click)="calculate()" [disabled]="loading || !hasData()">
-            <mat-icon>play_arrow</mat-icon> Lancer le calcul
-          </button>
-        </div>
+        <button mat-flat-button color="primary" (click)="calculate()" [disabled]="loading || !hasData()">
+          <mat-icon>play_arrow</mat-icon> Lancer le calcul
+        </button>
       </header>
 
       <div *ngIf="!hasData()" class="empty-state">
@@ -264,13 +256,10 @@ import { NotificationService } from '../../services/notification.service';
     .zone-badge { font-size: 11px; background: #f3f4f6; padding: 2px 6px; border-radius: 4px; color: var(--text-secondary); }
     .item-price { font-weight: 600; color: var(--text-main); }
 
-    .actions { display: flex; gap: 12px; }
-
     @media (max-width: 768px) {
       .page-container { padding: 20px; }
       .page-header { flex-direction: column; align-items: flex-start; }
-      .actions { width: 100%; flex-direction: column; }
-      .actions button { width: 100%; }
+      .page-header button { width: 100%; }
       .stat-value { font-size: 24px; }
       .grid-2-col { grid-template-columns: 1fr; }
       .detail-column:first-child { border-right: none; border-bottom: 1px solid var(--border-color); }
@@ -280,15 +269,11 @@ import { NotificationService } from '../../services/notification.service';
 export class CostComparisonComponent {
   results: CostBreakdown | null = null;
   loading = false;
-  saving = false;
   hasData = computed(() => this.planningService.currentPlanning().length > 0);
 
   constructor(
     private costsService: CostsService,
-    private planningService: PlanningService,
-    private historyService: HistoryService,
-    private snackBar: MatSnackBar,
-    private notificationService: NotificationService
+    private planningService: PlanningService
   ) {}
 
   calculate() {
@@ -311,37 +296,5 @@ export class CostComparisonComponent {
     if (!this.results) return 0;
     const max = Math.max(this.results.option_1_total, this.results.option_2_total);
     return (value / max) * 100;
-  }
-
-  saveToHistory() {
-    if (!this.results) return;
-
-    this.saving = true;
-    const request = {
-      total_cost: this.results.option_1_total,
-      savings: this.results.savings,
-      total_vehicles: this.results.kpi_option_1.total_vehicles,
-      total_employees: this.planningService.currentPlanning().length,
-      planning_summary: {
-         date: new Date().toISOString(),
-         source: "Analyse Comparative"
-      }
-    };
-
-    this.historyService.archive(request as any).subscribe({
-      next: () => {
-        this.saving = false;
-        this.snackBar.open('Résultats enregistrés dans l\'historique', 'Fermer', { duration: 3000 });
-        this.notificationService.add({
-           title: 'Historique mis à jour',
-           message: 'L\'analyse a été archivée avec succès.',
-           type: 'success'
-        });
-      },
-      error: () => {
-        this.saving = false;
-        this.snackBar.open('Erreur lors de l\'enregistrement', 'Fermer', { duration: 5000 });
-      }
-    });
   }
 }

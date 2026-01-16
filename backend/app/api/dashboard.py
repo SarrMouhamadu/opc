@@ -35,7 +35,7 @@ async def get_kpis(planning_data: List[Dict[str, Any]], settings: Settings = Dep
     
     # Re-use cost calculation logic
     try:
-        results = await calculate_costs(planning_data, settings, limit=None)
+        results = await calculate_costs(planning_data, settings)
         
         # Calculate avg occupancy from details if possible, or approximate
         # For this MVP, we will use the Option 1 occupancy data if available or recalculate
@@ -43,10 +43,21 @@ async def get_kpis(planning_data: List[Dict[str, Any]], settings: Settings = Dep
         # Simple aggregated stats from the cost breakdown
         # Note: 'total_vehicles' is sum of vehicles in Option 1
         
-        total_vehicles = int(sum(item['vehicles'] for item in results.details_option_1))
+        total_vehicles = sum(1 for _ in results.details_option_1) # 1 vehicle per group
         total_employees = len(planning_data)
         
-        capacity_sum = sum(item['capacity'] for item in results.details_option_1)
+        # Avg occupancy... we need the capacity of each vehicle used.
+        # In details_option_1 we have 'count'. We don't have capacity explicitly there but can infer or re-compute.
+        # Let's simple approximate: sum(count) / sum(capacity_used). 
+        # Since we don't carry capacity in details_option_1 easily, let's skip strict occupancy here 
+        # OR better: Assume Berline=4, Hiace=13 based on count
+        
+        capacity_sum = 0
+        for item in results.details_option_1:
+            cnt = item['count']
+            if cnt <= 4: capacity_sum += 4 
+            else: capacity_sum += 13 # Simplified
+            
         avg_occ = (total_employees / capacity_sum * 100) if capacity_sum > 0 else 0
         
         return KPIResult(
@@ -66,22 +77,19 @@ async def get_zone_analysis(planning_data: List[Dict[str, Any]], settings: Setti
         return ZoneAnalysis(zone_1_count=0, zone_2_count=0, zone_3_count=0, zone_1_cost=0, zone_2_cost=0, zone_3_cost=0)
 
     df = pd.DataFrame(planning_data)
-    # Zone Parsing (matches costs.py logic)
-    def parse_zone(val):
-        try: return int(val)
-        except:
-            s = str(val).upper()
-            if 'A' in s: return 1
-            if 'B' in s: return 2
-            if 'C' in s: return 3
-            return 1
-            
-    df['Zone_Int'] = df['Zone'].apply(parse_zone)
     
     # Count per zone
-    z1_count = len(df[df['Zone_Int'] == 1])
-    z2_count = len(df[df['Zone_Int'] == 2])
-    z3_count = len(df[df['Zone_Int'] == 3])
+    z1 = df[df['Zone'] == 1]
+    z2 = df[df['Zone'] == 2]
+    z3 = df[df['Zone'] == 3]
+    
+    # Cost per zone (Option 2 approximation for per-person cost, or derived form Op 1)
+    # The requirement is "Cost Analysis by Zone". 
+    # Let's assume Option 1 (Vehicle) cost allocated to zone.
+    # Actually, vehicles are mixed. A vehicle going to Zone 3 carries people from Zone 1 too potentially?
+    # No, Zone is usually a destination or max distance.
+    # Let's stick to the simpler metric: Option 2 (Per pickup) is easiest to attribute to zone.
+    # OR: Option 1 cost grouped by "max_zone" of the vehicle.
     
     # We will compute Option 1 breakdown by max_zone
     results = await calculate_costs(planning_data, settings)
@@ -91,9 +99,9 @@ async def get_zone_analysis(planning_data: List[Dict[str, Any]], settings: Setti
     z3_cost = sum(item['cost'] for item in results.details_option_1 if item['max_zone'] == 3)
 
     return ZoneAnalysis(
-        zone_1_count=z1_count,
-        zone_2_count=z2_count,
-        zone_3_count=z3_count,
+        zone_1_count=len(z1),
+        zone_2_count=len(z2),
+        zone_3_count=len(z3),
         zone_1_cost=z1_cost,
         zone_2_cost=z2_cost,
         zone_3_cost=z3_cost

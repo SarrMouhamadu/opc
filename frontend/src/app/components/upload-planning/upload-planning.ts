@@ -28,7 +28,7 @@ import { NotificationService } from '../../services/notification.service';
     <div class="page-container">
       <header class="page-header">
         <h2>Ingestion du Planning</h2>
-        <p>Importez vos données de transport (uniquement Excel) pour commencer l'analyse.</p>
+        <p>Importez vos données de transport (Excel uniquement) pour commencer l'analyse.</p>
       </header>
 
       <!-- Upload Section -->
@@ -41,9 +41,9 @@ import { NotificationService } from '../../services/notification.service';
             <mat-icon>cloud_upload</mat-icon>
           </div>
           <h3>Déposez votre planning ici</h3>
-          <p>ou cliquez pour sélectionner un fichier Excel (.xlsx, .xls)</p>
-          <button mat-flat-button color="primary" (click)="$event.stopPropagation(); fileInput.click()">
-            Parcourir les fichiers Excel
+          <p>ou cliquez pour sélectionner un fichier (Excel .xlsx, .xls)</p>
+          <button mat-stroked-button color="primary" (click)="$event.stopPropagation(); fileInput.click()">
+            Parcourir les fichiers
           </button>
         </div>
       </div>
@@ -257,8 +257,9 @@ export class UploadPlanning {
   }
 
   handleFile(file: File) {
-    if (!file.name.toLowerCase().endsWith('.xlsx') && !file.name.toLowerCase().endsWith('.xls')) {
-      this.snackBar.open("Seuls les fichiers Excel (.xlsx, .xls) sont acceptés.", 'Fermer', { duration: 5000 });
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    if (ext !== 'xlsx' && ext !== 'xls') {
+      this.snackBar.open('Seuls les fichiers Excel (.xlsx, .xls) sont acceptés.', 'Fermer', { duration: 5000 });
       return;
     }
     this.selectedFile = file;

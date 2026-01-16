@@ -4,6 +4,7 @@ from typing import List, Dict, Any, Optional
 from app.api.settings import get_settings, Settings, VehicleType
 import pandas as pd
 import math
+from app.api.audit import log_event
 
 router = APIRouter(prefix="/costs", tags=["Costs"])
 
@@ -25,11 +26,7 @@ class CostBreakdown(BaseModel):
     details_option_2: List[Dict[str, Any]]
 
 @router.post("/calculate", response_model=CostBreakdown)
-async def calculate_costs(
-    planning_data: List[Dict[str, Any]], 
-    settings: Settings = Depends(get_settings),
-    limit: Optional[int] = 200 # Default limit for API
-):
+async def calculate_costs(planning_data: List[Dict[str, Any]], settings: Settings = Depends(get_settings)):
     if not planning_data:
         raise HTTPException(status_code=400, detail="Planning data is required for calculation")
 
@@ -42,34 +39,24 @@ async def calculate_costs(
     # PRE-PROCESSING
     # -----------------------------------------------------
     
-    # Optimized Zone Parsing using cache
-    _zone_cache = {}
-    def parse_zone_fast(val):
-        if val in _zone_cache: return _zone_cache[val]
+    # Robust Zone Parsing
+    def parse_zone(val):
         try:
-            res = int(val)
+            return int(val)
         except:
             s = str(val).upper()
-            if 'A' in s: res = 1
-            elif 'B' in s: res = 2
-            elif 'C' in s: res = 3
-            else:
-                import re
-                digits = re.findall(r'\d+', s)
-                res = int(digits[0]) if digits else 1
-        _zone_cache[val] = res
-        return res
+            import re
+            digits = re.findall(r'\d+', s)
+            if digits: return int(digits[0])
+            if 'A' in s: return 1
+            if 'B' in s: return 2
+            if 'C' in s: return 3
+            return 1
 
     if "Zone" not in df.columns: 
         df["Zone"] = 1
     else: 
-        unique_zones = df["Zone"].unique()
-        zone_map = {z: parse_zone_fast(z) for z in unique_zones}
-        df["Zone"] = df["Zone"].map(zone_map)
-
-    # Robust Date/Time formatting
-    df['Date'] = df['Date'].astype(str)
-    df['Time'] = df['Time'].astype(str)
+        df["Zone"] = df["Zone"].apply(parse_zone)
 
     if "Ligne_Bus_Option_2" not in df.columns: df["Ligne_Bus_Option_2"] = "Ligne Indéfinie"
 
@@ -79,16 +66,18 @@ async def calculate_costs(
     df["max_zone"] = df.groupby(["Date", "Time"])["Zone"].transform("max")
     
     # Pre-calculate prices per vehicle/zone
+    # v.zone_prices.get(max_zone, v.base_price)
     hiace = next(v for v in settings.vehicle_types if "hiace" in v.name.lower())
     berline = next(v for v in settings.vehicle_types if v.name == "Berline")
     
-    hiace_prices_map = {z: hiace.zone_prices.get(z, hiace.base_price) for z in [1, 2, 3]}
-    berline_prices_map = {z: berline.zone_prices.get(z, berline.base_price) for z in [1, 2, 3]}
+    hiace_prices = {z: hiace.zone_prices.get(z, hiace.base_price) for z in [1, 2, 3]}
+    berline_prices = {z: berline.zone_prices.get(z, berline.base_price) for z in [1, 2, 3]}
 
     # -----------------------------------------------------
     # OPTION 2: LINE MODE (BUS 13 PAX)
     # -----------------------------------------------------
-    op2_counts = df.groupby(["Date", "Time", "Ligne_Bus_Option_2", "max_zone"]).size().reset_index(name='pax_count')
+    op2_groups_all = df.groupby(["Date", "Time", "Ligne_Bus_Option_2", "max_zone"])
+    op2_counts = op2_groups_all.size().reset_index(name='pax_count')
     op2_counts['n_vehicles'] = (op2_counts['pax_count'] / 13.0).apply(math.ceil)
     op2_counts['cost'] = op2_counts['n_vehicles'] * settings.option_2_bus_price
     
@@ -97,11 +86,10 @@ async def calculate_costs(
     op2_total_capacity = op2_total_vehicles * 13
 
     # KPI Zone Attribution
-    op2_zones_count = df["Zone"].value_counts().to_dict()
-    for z in [1, 2, 3]: op2_zones_count.setdefault(z, 0)
-    
-    total_pax = len(df)
-    op2_zones_cost = {z: (op2_total_cost * (op2_zones_count[z] / total_pax) if total_pax > 0 else 0) for z in [1, 2, 3]}
+    op2_zones_count = {z: len(df[df["Zone"] == z]) for z in [1, 2, 3]}
+    # For Zone Cost, we attribute proportionally
+    # This is a bit complex in vectorized way, but let's stick to a cleaner logic
+    op2_zones_cost = {z: (op2_total_cost * (op2_zones_count[z] / len(df)) if len(df) > 0 else 0) for z in [1, 2, 3]}
 
     op2_kpi = KPIDetail(
         cost_per_person_zone_1=op2_zones_cost[1] / op2_zones_count[1] if op2_zones_count[1] else 0,
@@ -114,56 +102,45 @@ async def calculate_costs(
     # -----------------------------------------------------
     # OPTION 1: VEHICLE (GREEDY)
     # -----------------------------------------------------
-    op1_counts = df.groupby(["Date", "Time", "max_zone"]).size().reset_index(name='pax_count')
+    op1_groups_all = df.groupby(["Date", "Time", "max_zone"])
+    op1_counts = op1_groups_all.size().reset_index(name='pax_count')
     
-    # --- OPTIMIZED CALCULATION ENGINE ---
-    def get_optimal_mix(n, z):
-        h_price = hiace_prices_map.get(z, hiace.base_price)
-        b_price = berline_prices_map.get(z, berline.base_price)
-        
-        # 1. Combination of only Berlines
-        n_b_only = math.ceil(n / 4)
-        cost_only_b = n_b_only * b_price
-        
-        # 2. Combination of Hiaces (and one remainder Berline or Hiace)
-        n_h = n // 13
-        rem = n % 13
-        
-        cost_h_mix = n_h * h_price
-        n_b_rem = 0
-        if rem > 0:
-            # If remainder fits in 1 berline and it's cheaper than 1 hiace
-            if rem <= 4 and b_price < h_price:
-                cost_h_mix += b_price
-                n_b_rem = 1
+    def calc_op1_group(row):
+        cnt = row['pax_count']
+        z = row['max_zone']
+        cost = 0
+        v_count = 0
+        cap = 0
+        rem = cnt
+        while rem > 0:
+            if rem <= 4:
+                cost += berline_prices.get(z, berline.base_price)
+                v_count += 1
+                cap += 4
+                rem = 0
             else:
-                cost_h_mix += h_price
-                n_h += 1
-        
-        if cost_only_b <= cost_h_mix:
-            return pd.Series([cost_only_b, n_b_only, 0, n_b_only * 4, n])
-        else:
-            return pd.Series([cost_h_mix, n_b_rem, n_h, (n_h * 13) + (n_b_rem * 4), n])
+                cost += hiace_prices.get(z, hiace.base_price)
+                v_count += 1
+                cap += 13
+                rem -= 13
+        return pd.Series([cost, v_count, cap])
 
-    op1_metrics = op1_counts.apply(lambda r: get_optimal_mix(r['pax_count'], r['max_zone']), axis=1)
-    op1_counts[['cost', 'n_berlines', 'n_hiaces', 'capacity', 'count']] = op1_metrics
-    op1_counts['n_vehicles'] = op1_counts['n_berlines'] + op1_counts['n_hiaces']
+    op1_counts[['cost', 'n_vehicles', 'capacity']] = op1_counts.apply(calc_op1_group, axis=1)
     
-    op1_total_cost = float(op1_counts['cost'].sum())
-    op1_total_vehicles = int(op1_counts['n_vehicles'].sum())
-    op1_total_capacity = int(op1_counts['capacity'].sum())
+    op1_total_cost = op1_counts['cost'].sum()
+    op1_total_vehicles = op1_counts['n_vehicles'].sum()
+    op1_total_capacity = op1_counts['capacity'].sum()
     
-    op1_zones_cost = {z: (op1_total_cost * (op2_zones_count[z] / total_pax) if total_pax > 0 else 0) for z in [1, 2, 3]}
+    op1_zones_count = {z: len(df[df["Zone"] == z]) for z in [1, 2, 3]}
+    op1_zones_cost = {z: (op1_total_cost * (op1_zones_count[z] / len(df)) if len(df) > 0 else 0) for z in [1, 2, 3]}
 
-    # Prepare Detail Lists for UI with optional limit
-    _counts_1 = op1_counts.head(limit) if limit else op1_counts
-    details_option_1 = _counts_1.rename(columns={
+    # Prepare Detail Lists for UI
+    details_option_1 = op1_counts.head(50).rename(columns={
         "Date": "date", "Time": "time", "n_vehicles": "vehicles"
     }).to_dict(orient="records")
 
-    _counts_2 = op2_counts.head(limit) if limit else op2_counts
-    details_option_2 = _counts_2.rename(columns={
-        "Date": "date", "Time": "time", "Ligne_Bus_Option_2": "line", "n_vehicles": "vehicles", "pax_count": "count"
+    details_option_2 = op2_counts.head(50).rename(columns={
+        "Date": "date", "Time": "time", "Ligne_Bus_Option_2": "line", "n_vehicles": "vehicles"
     }).to_dict(orient="records")
 
     op1_kpi = KPIDetail(
@@ -187,6 +164,8 @@ async def calculate_costs(
     # -----------------------------------------------------
     savings = op2_total_cost - op1_total_cost 
     best = "Option 1 (Véhicules)" if op1_total_cost < op2_total_cost else "Option 2 (Lignes Bus)"
+
+    log_event("Calcul des Coûts", f"Analyse terminée. Meilleure option: {best}")
 
     return CostBreakdown(
         option_1_total=op1_total_cost,
