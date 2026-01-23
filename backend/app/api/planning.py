@@ -132,6 +132,9 @@ async def upload_planning(file: UploadFile = File(...)):
         })
 
         # Save full data for persistence
+        # Replace NaN with None for JSON compliance
+        df = df.where(pd.notnull(df), None)
+        
         full_data = df.to_dict(orient="records")
         os.makedirs(os.path.dirname(CURRENT_PLANNING_FILE), exist_ok=True)
         with open(CURRENT_PLANNING_FILE, "w") as f:
