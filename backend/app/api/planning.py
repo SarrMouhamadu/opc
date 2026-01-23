@@ -28,8 +28,8 @@ def get_current_planning():
 
 @router.post("/upload")
 async def upload_planning(file: UploadFile = File(...)):
-    if not file.filename.lower().endswith(('.xlsx', '.xls')):
-        raise HTTPException(status_code=400, detail="Format de fichier invalide. Veuillez utiliser uniquement des fichiers Excel (.xlsx, .xls).")
+    if not file.filename.lower().endswith(('.xlsx', '.xls', '.csv')):
+        raise HTTPException(status_code=400, detail="Format de fichier invalide. Veuillez utiliser des fichiers Excel (.xlsx, .xls) ou CSV (.csv).")
     
     COLUMN_MAPPING = {
         "Employee ID": ["employeeid", "employee_id", "matricule", "employe", "id", "employee", "nom", "name", "salarie", "agent", "personne", "id_salarie"],
@@ -46,6 +46,21 @@ async def upload_planning(file: UploadFile = File(...)):
         
         if file_ext.endswith(('.xlsx', '.xls')):
             df = pd.read_excel(io.BytesIO(content))
+        elif file_ext.endswith('.csv'):
+            # Try parsing with different separators and encodings
+            try:
+                # First attempt: semicolon separator (common in FR), utf-8
+                df = pd.read_csv(io.BytesIO(content), sep=';')
+                if len(df.columns) <= 1: # Fallback if semicolon didn't work well
+                    df = pd.read_csv(io.BytesIO(content), sep=',')
+            except UnicodeDecodeError:
+                # Fallback to latin-1 for Excel-generated CSVs
+                try:
+                    df = pd.read_csv(io.BytesIO(content), sep=';', encoding='latin-1')
+                    if len(df.columns) <= 1:
+                        df = pd.read_csv(io.BytesIO(content), sep=',', encoding='latin-1')
+                except:
+                     raise HTTPException(status_code=400, detail="Erreur d'encodage CSV. Veuillez utiliser UTF-8 ou Latin-1.")
         else:
             raise HTTPException(status_code=400, detail="Type de fichier non supporté.")
         
