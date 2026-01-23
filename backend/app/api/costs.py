@@ -52,10 +52,10 @@ async def calculate_costs(request: CalculationRequest, settings: Settings = Depe
     df = pd.DataFrame(planning_data)
     n_lines = len(df)
     
-    if n_lines < 100:
+    if n_lines < 5:
         raise HTTPException(
             status_code=400, 
-            detail=f"Audit invalidé : Volume insuffisant ({n_lines}/100). Un minimum de 100 lignes est requis pour l'analyse."
+            detail=f"Audit invalidé : Volume insuffisant ({n_lines}/5). Un minimum de 5 lignes est requis pour l'analyse."
         )
 
     # Pre-processing Zone

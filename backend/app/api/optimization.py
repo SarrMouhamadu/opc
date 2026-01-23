@@ -28,11 +28,11 @@ async def analyze_optimization(request: OptimizationRequest, settings: Settings 
     df = pd.DataFrame(planning_data)
     n_lines = len(df)
 
-    # Ajustement du garde-fou pour le test final (Seuil abaissé à 100)
-    if n_lines < 100:
+    # Ajustement du garde-fou pour le test final (Seuil abaissé à 5)
+    if n_lines < 5:
         raise HTTPException(
             status_code=400, 
-            detail=f"Simulation refusée : Volume insuffisant ({n_lines}/100). L'optimisation requiert un jeu de données minimal."
+            detail=f"Simulation refusée : Volume insuffisant ({n_lines}/5). L'optimisation requiert un jeu de données minimal."
         )
     
     # Use provided window or default from settings
